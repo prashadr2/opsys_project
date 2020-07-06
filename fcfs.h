@@ -4,10 +4,10 @@
 #include <iostream>
 #include <vector>
 
-void test();
+void fcfstest();
 
-void test(){
-    std::cout << "void test" << std::endl;
+void fcfstest(){
+    std::cout << "void fcfs test" << std::endl;
 }
 
 
