@@ -22,7 +22,7 @@ int main(int argc, char** argv){
     int tslice = (int)argv[7];
     std::string rradd("END");
     if(argc == 9) rradd = argv[8];
-    
+
     test();
 
     return EXIT_SUCCESS;
