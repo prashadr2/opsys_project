@@ -3,11 +3,14 @@
 
 #include <iostream>
 #include <vector>
+#include <fstream>
 
-void fcfstest();
+void fcfs(std::ofstream& outfile, int n, long int seed);
 
-void fcfstest(){
-    std::cout << "void fcfs test" << std::endl;
+void fcfs(std::ofstream& outfile, int n, long int seed){
+    outfile << "Algorithm FCFS\n"; //write to file test... working
+    int t = 0; //elapsed time
+
 }
 
 

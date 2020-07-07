@@ -7,6 +7,7 @@ Emily Martsolf - martse
 */
 #include <iostream>
 #include <string>
+#include <fstream>
 
 #include "fcfs.h"
 #include "sjf.h"
@@ -16,9 +17,11 @@ Emily Martsolf - martse
 int main(int argc, char** argv){
     setvbuf( stdout, NULL, _IONBF, 0 );
     if(argc < 8){
-        std::cerr << "Correct Usage: ./a.o [n] [seed] [lambda] [upper_bound] [t_cs] [alpha] [t_slice] [rr_add (OPTIONAL)]" << std::endl;
+        std::cerr << "ERROR: Correct Usage --> ./a.o [n] [seed] [lambda] [upper_bound] [t_cs] [alpha] [t_slice] [rr_add (OPTIONAL)]" << std::endl;
         return EXIT_FAILURE;
     }
+    std::ofstream outfile("simout.txt");
+
     int n = atoi(argv[1]);
     long int seed = atol(argv[2]); //long int from manpage
     float lambda = atof(argv[3]);
@@ -29,10 +32,12 @@ int main(int argc, char** argv){
     std::string rradd("END");
     if(argc == 9) rradd = argv[8];
 
-    fcfstest();
+    fcfs(outfile, n, seed);
     sjftest();
     srttest();
     rrtest();
 
+
+    outfile.close();
     return EXIT_SUCCESS;
 }
