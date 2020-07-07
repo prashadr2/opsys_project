@@ -2,6 +2,7 @@
 #define __projectprocess_
 
 #include <iostream>
+#include <vector>
 #include <string>
 
 class Process{
