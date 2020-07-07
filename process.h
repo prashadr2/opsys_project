@@ -6,7 +6,7 @@
 
 class Process{
     public:
-    Process(std::string zname, int zarrival_time, int zbursts, int zcpu_time, int zio_time){
+    Process(std::string zname, int zarrival_time, int zbursts, std::vector<int> zcpu_time, std::vector<int> zio_time){
         name = zname;
         arrival_time = zarrival_time;
         bursts = zbursts;
@@ -17,14 +17,14 @@ class Process{
     std::string getname() {return name;}
     int getarrivaltime() {return arrival_time;}
     int getbursts() {return bursts;}
-    int getcputime() {return cpu_time;}
-    int getiotime() {return io_time;}
+    std::vector<int> getcputime() {return cpu_time;}
+    std::vector<int> getiotime() {return io_time;}
 
     private:
     std::string name;
     int arrival_time;
     int bursts;
-    int cpu_time;
-    int io_time; //if this is -1, that means no io burst time is here....
+    std::vector<int> cpu_time;
+    std::vector<int> io_time; //if this is -1, that means no io burst time is here....
 };
 #endif

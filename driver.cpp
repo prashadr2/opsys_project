@@ -31,9 +31,9 @@ int main(int argc, char** argv){
     int tslice = atoi(argv[7]);
     std::string rradd("END");
     if(argc == 9) rradd = argv[8];
-
-    Process test("A", 2,3,4,5); //process test
-    std::cout << test.getarrivaltime() << test.getbursts() << test.getcputime() << test.getiotime() << test.getname() << std::endl;
+    std::vector<int> timetest;
+    Process test("A", 2,3,timetest,timetest); //process test
+    std::cout << test.getarrivaltime() << test.getbursts() << test.getname() << std::endl;
     
     fcfs(outfile, n, seed);
     sjftest();
