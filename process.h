@@ -25,6 +25,6 @@ class Process{
     int arrival_time;
     int bursts;
     int cpu_time;
-    int io_time;
+    int io_time; //if this is -1, that means no io burst time is here....
 };
 #endif

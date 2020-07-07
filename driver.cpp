@@ -22,7 +22,6 @@ int main(int argc, char** argv){
         return EXIT_FAILURE;
     }
     std::ofstream outfile("simout.txt");
-
     int n = atoi(argv[1]);
     long int seed = atol(argv[2]); //long int from manpage
     float lambda = atof(argv[3]);
