@@ -13,6 +13,7 @@ Emily Martsolf - martse
 #include "sjf.h"
 #include "srt.h"
 #include "rr.h"
+#include "process.h"
 
 int main(int argc, char** argv){
     setvbuf( stdout, NULL, _IONBF, 0 );
@@ -32,6 +33,9 @@ int main(int argc, char** argv){
     std::string rradd("END");
     if(argc == 9) rradd = argv[8];
 
+    Process test("A", 2,3,4,5); //process test
+    std::cout << test.getarrivaltime() << test.getbursts() << test.getcputime() << test.getiotime() << test.getname() << std::endl;
+    
     fcfs(outfile, n, seed);
     sjftest();
     srttest();
