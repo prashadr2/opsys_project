@@ -21,9 +21,8 @@ void fcfs(std::ofstream& outfile, std::vector<Process>& p){
     std::vector<Process> sortedp(p);
     std::sort(sortedp.begin(), sortedp.end(), [](Process p1, Process p2) -> bool {return p1.getarrivaltime() < p2.getarrivaltime();});
     
-    std::queue<Process, std::deque<Process> > readyq(std::deque<Process>(sortedp.begin(), sortedp.end()));
-    std::queue<Process> waitingq;
-    std::queue<Process> runningq; //does this need to be a queue? does the cpu only run one process at a time??
+    // std::queue<Process, std::deque<Process> > readyq(std::deque<Process>(sortedp.begin(), sortedp.end())); //convert vector to queue
+    
 
     std::cout << "time <" << t << ">ms: Start of simulation [Q";
     for(Process pp : sortedp) {

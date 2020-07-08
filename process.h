@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <list>
 
 class Process{
     public:
@@ -21,6 +22,8 @@ class Process{
     int getbursts() const {return bursts;}
     std::vector<int> getcputime() const {return cpu_time;}
     std::vector<int> getiotime() const {return io_time;}
+
+    int getcurrentwait()
 
     private:
     std::string name;
