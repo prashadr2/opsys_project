@@ -48,6 +48,16 @@ void fcfs(std::ofstream& outfile, std::vector<Process>& p){
     //     std::cout << std::endl;
     // }
 
+//         std::cout << "time <" << t << ">ms: Start of simulation [Q";
+//     for(Process pp : sortedp) {
+//         std::cout << ' ' << pp.getname();
+// #ifdef DEBUG_MODE
+//     std::cout << ",arrivaltime: " <<  pp.getarrivaltime() << " ||";
+// #endif
+//     }
+//     std::cout << ']' << std::endl;
+// }
+
 }
 
 

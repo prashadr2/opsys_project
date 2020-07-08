@@ -52,8 +52,8 @@ int main(int argc, char** argv){
     srand48(seed);
     for(int z = 0; z < n; z++){
         std::string name = names.substr(z,1);
-        std::vector<int> cputimes;
-        std::vector<int> iotimes;
+        std::list<int> cputimes;
+        std::list<int> iotimes;
         int arrivaltime = (int)floor(nextrandnum(lambda,upperbound));
         int burstamt = (int)trunc(nextrandnum(lambda,upperbound) * 100) + 1;
         for(int y = 0; y < burstamt; y++){
