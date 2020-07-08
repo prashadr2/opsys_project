@@ -35,5 +35,7 @@ void fcfs(std::ofstream& outfile, std::vector<Process>& p){
     std::cout << ']' << std::endl;
 }
 
-
+//rm -rf .git/refs/remotes/origin/
+//./a.o 5 231313123213123123 0.001343232423 545 5 5 5
+//g++ -D DEBUG_MODE -o a.o driver.cpp
 #endif
