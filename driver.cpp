@@ -5,15 +5,29 @@ Ryan Prashad - prashr
 Jackson Rothgeb - rothgj
 Emily Martsolf - martse
 */
+
+//cpp includes
 #include <iostream>
 #include <string>
 #include <fstream>
-
+//c includes
+#include <math.h>
+//custom includes
 #include "fcfs.h"
 #include "sjf.h"
 #include "srt.h"
 #include "rr.h"
 #include "process.h"
+
+double nextrandnum(double lambda, int upperbound){
+    double r = drand48();
+    double x = -log(r) / lambda;
+    while(x > (double)upperbound){
+        r = drand48();
+        x = -log(r) / lambda;
+    }
+    return x;
+}
 
 int main(int argc, char** argv){
     setvbuf( stdout, NULL, _IONBF, 0 );
@@ -22,20 +36,37 @@ int main(int argc, char** argv){
         return EXIT_FAILURE;
     }
     std::ofstream outfile("simout.txt");
+    const std::string names("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
     int n = atoi(argv[1]);
     long int seed = atol(argv[2]); //long int from manpage
-    float lambda = atof(argv[3]);
+    double lambda = (double)atof(argv[3]);
     int upperbound = atoi(argv[4]);
     int tcs = atoi(argv[5]); //positive even int
     int alpha = atoi(argv[6]); //correct type??
     int tslice = atoi(argv[7]);
     std::string rradd("END");
     if(argc == 9) rradd = argv[8];
-    std::vector<int> timetest;
-    Process test("A", 2,3,timetest,timetest); //process test
-    std::cout << test.getarrivaltime() << test.getbursts() << test.getname() << std::endl;
     
-    fcfs(outfile, n, seed);
+    //start process setup...
+    std::vector<Process> psetup;
+    srand48(seed);
+    for(int z = 0; z < n; z++){
+        std::string name = names.substr(z,1);
+        std::vector<int> cputimes;
+        std::vector<int> iotimes;
+        int arrivaltime = (int)floor(nextrandnum(lambda,upperbound));
+        int burstamt = (int)trunc(nextrandnum(lambda,upperbound) * 100) + 1;
+        for(int y = 0; y < burstamt; y++){
+            cputimes.push_back((int)ceil(nextrandnum(lambda,upperbound)));
+            if(y == burstamt - 1){ //last cpu burst
+                iotimes.push_back(-1); //-1 val means NO ioburst on this run... make sure to reflect this in algorithms!!
+            } else {
+                iotimes.push_back((int)ceil(nextrandnum(lambda,upperbound)));
+            }
+        }
+        psetup.push_back(Process(name,arrivaltime,burstamt,cputimes,iotimes));
+    }
+    fcfs(outfile, psetup);
     sjftest();
     srttest();
     rrtest();
