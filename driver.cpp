@@ -81,7 +81,7 @@ int main(int argc, char** argv){
 // Test 4     ./a.out 16 2 0.01 256 4 0.75 64
 
 // Test 5     ./a.out 8 64 0.001 4096 4 0.5 2048
-
+//rm -rf .git/refs/remotes/origin/
     outfile.close();
     return EXIT_SUCCESS;
 }
