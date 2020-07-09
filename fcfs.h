@@ -27,6 +27,8 @@ void printqueue(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE C
   std::cout << "]" << std::endl;
 }
 
+//arrival time, cpu start, cpu end(io start), io end
+
 void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
     outfile << "Algorithm FCFS\n"; //write to file test... working
 
@@ -34,9 +36,12 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
   	std::list<Process> unarrived;
     std::list<Process> ready; //first positon in ready queue IS THE PROCESS CURRENTLY IN THE CPU
     std::list<Process> waiting;
+    auto compname = [](Process p1, Process p2) -> bool {return p1.getname() < p2.getname();};
+    auto comparrival = [](Process p1, Process p2) -> bool {if(p1.getarrivaltime() == p2.getarrivaltime()) return p1.getname() < p2.getname(); else return p1.getarrivaltime() < p2.getarrivaltime();};
+    auto compcurwait = [](Process p1, Process p2) -> bool {if(p1.getcurrentwait() == p2.getcurrentwait()) return p1.getname() < p2.getname(); else return p1.getcurrentwait() < p2.getcurrentwait();};
 
     for(Process z : p) unarrived.push_back(Process(z)); //use deep copy to not modify the input
-    unarrived.sort([](Process p1, Process p2) -> bool {return p1.getname() < p2.getname();}); //sort by names for printing first
+    unarrived.sort(compname); //sort by names for printing first
    
     for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
         std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU bursts" << std::endl;
@@ -44,27 +49,24 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
     std::cout << "time <0>ms: Simulator started for FCFS ";
     printqueue(ready);
 
-  	unarrived.sort([](Process p1, Process p2) -> bool {return p1.getarrivaltime() < p2.getarrivaltime();}); //sorting for actual program.
+  	unarrived.sort(comparrival); //sorting for actual program
    	t = unarrived.front().getarrivaltime();
   	ready.push_back(unarrived.front());
     unarrived.pop_front();
-    for(std::list<Process>::iterator zit = unarrived.begin(); zit != unarrived.end(); zit++){
-     	if(zit->getarrivaltime() == t) ready.push_back(*zit);
-    }
-    ready.sort([](Process p1, Process p2) -> bool {return p1.getname() < p2.getname();}); //ready is forced to have the same arrival time at this point...
+    for(auto const& z : unarrived) if(z.getarrivaltime() == t) ready.push_back(z);
+    ready.sort(compname); //ready is forced to have the same arrival time at this point...
   	
-  	while(!ready.empty() && !waiting.empty() && !unarrived.empty()){
-      if(unarrived.front().getarrivaltime() < waiting.front().getcurrentwait() //next "interesting" event is process arrival
-          && unarrived.front().getarrivaltime() < ready.front().getarrivaltime()) {
-        
-        int gap = t - unarrived.front().getarrivaltime();
-        t = unarrived.front().getarrivaltime();
-    	ready.push_back(unarrived.front());
-        unarrived.pop_front();
-        std::cout << "time <" << t << ">ms: Process \"" << ready.back().getname() << "\" arrived ";
-        printqueue(ready);
-        
-        //decrement all the other times by gap
+    while(!ready.empty() && !waiting.empty() && !unarrived.empty()){
+        waiting.sort(compcurwait); //update wait ordering...
+        if(unarrived.front().getarrivaltime() < waiting.front().getcurrentwait() //next "interesting" event is process arrival
+            && unarrived.front().getarrivaltime() < ready.front().getarrivaltime()) {
+            int gap = t - unarrived.front().getarrivaltime();
+            t = unarrived.front().getarrivaltime();
+            ready.push_back(unarrived.front());
+            unarrived.pop_front();
+            std::cout << "time <" << t << ">ms: Process \"" << ready.back().getname() << "\" arrived ";
+            printqueue(ready);
+            //decrement all the other times by gap
       } else if(waiting.front().getcurrentwait() < ready.front().getcurrentruntime()) { //next "interesting" event is finishing I/O
       	ready.push_back(waiting.front());
         waiting.pop_front();

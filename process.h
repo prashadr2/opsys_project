@@ -30,14 +30,17 @@ class Process{
     }
     
     std::string getname() const {return name;}
+    
     int getarrivaltime() const {return arrival_time;}
-    int getbursts() const {return bursts;}
-    std::list<int> getcputime() const {return cpu_time;}
-    std::list<int> getiotime() const {return io_time;}
 
+    int getbursts() const {return bursts;}
+    void decreaseburst() {bursts--;}
+
+    std::list<int> getiotime() const {return io_time;}
     int getcurrentwait() {return io_time.front();}
     void movenextwait() {io_time.pop_front();}
 
+    std::list<int> getcputime() const {return cpu_time;}
     int getcurrentruntime() {return cpu_time.front();}
     void movenextruntime() {cpu_time.pop_front();}
 
