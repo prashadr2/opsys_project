@@ -30,26 +30,29 @@ class Process{
     }
     
     std::string getname() const {return name;}
-    
+
     int getarrivaltime() const {return arrival_time;}
 
     int getbursts() const {return bursts;}
     void decreaseburst() {bursts--;}
-
+    //calling front on an empty list is big worries also (undefined behavior)....
+    //use shortcutting to get around this ---> (!waiting.empty() && someconditon > waiting.front.getcurrentwait())
     std::list<int> getiotime() const {return io_time;}
     int getcurrentwait() {return io_time.front();}
     void movenextwait() {io_time.pop_front();}
+    void decreasewaittime(int d) {*(io_time.begin()) -= d;}
 
     std::list<int> getcputime() const {return cpu_time;}
     int getcurrentruntime() {return cpu_time.front();}
     void movenextruntime() {cpu_time.pop_front();}
+    void decreaseruntime(int d) {*(cpu_time.begin()) -= d;}
 
     private:
     std::string name;
     int arrival_time;
     int bursts;
     std::list<int> cpu_time;
-    std::list<int> io_time; //if this is -1, that means no io burst time is here
+    std::list<int> io_time; //if the last element is -2, that means no io burst time is here
     bool waiting;
 };
 

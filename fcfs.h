@@ -55,34 +55,71 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
     unarrived.pop_front();
     for(auto const& z : unarrived) if(z.getarrivaltime() == t) ready.push_back(z);
     ready.sort(compname); //ready is forced to have the same arrival time at this point...
-  	
-    while(!ready.empty() && !waiting.empty() && !unarrived.empty()){
-        waiting.sort(compcurwait); //update wait ordering...
-        if(unarrived.front().getarrivaltime() < waiting.front().getcurrentwait() //next "interesting" event is process arrival
-            && unarrived.front().getarrivaltime() < ready.front().getarrivaltime()) {
-            int gap = t - unarrived.front().getarrivaltime();
-            t = unarrived.front().getarrivaltime();
-            ready.push_back(unarrived.front());
-            unarrived.pop_front();
-            std::cout << "time <" << t << ">ms: Process \"" << ready.back().getname() << "\" arrived ";
+#ifdef DEBUG_MODE
+    for(auto const& debugs : ready) std::cout << "DEBUG READYQUEUE --> Process " << debugs.getname() << " (arrival time " << debugs.getarrivaltime() << " ms)" << std::endl;
+#endif
+    while(!ready.empty() || !waiting.empty() || !unarrived.empty()){ //if any statement is true we have work to do still...
+        if(waiting.size() > 1) waiting.sort(compcurwait); //update wait ordering...
+        int waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1; //if this val is -1, wait queue is empty, if it is -2, TERMINATE THE PROCESS!!!!
+        int arrivaltime = !unarrived.empty() ? unarrived.front().getarrivaltime() : -1;
+        int cputime =  !ready.empty() ? ready.front().getcurrentruntime() : -1;
+        if(waitingtime == -2){
+            std::cout << "time <" << t << ">: Process " << waiting.front().getname() << " terminated "; 
             printqueue(ready);
-            //decrement all the other times by gap
-      } else if(waiting.front().getcurrentwait() < ready.front().getcurrentruntime()) { //next "interesting" event is finishing I/O
-      	ready.push_back(waiting.front());
-        waiting.pop_front();
-      } else { //next "interesting" event is CPU burst completion/termination
-        if (ready.front().getcurrentwait() == -1 ){ //process terminates
-          std::cout << "time <" << t << ">ms: Process finishes using the CPU" << std::endl;
-        	std::cout << "time <" << t << ">ms: Process Terminates" << std::endl;
-        } else {
-          waiting.push_back(ready.front()); //process in cpu moved to waiting state for I/O
-          ready.pop_front();
-          std::cout << "time <" << t << ">ms: Process finishes using the CPU" << std::endl;
-           //t = t + context switch
-          std::cout << "time <" << t << ">ms: Process starts performing I/O" << std::endl; //waiting.back()
-          std::cout << "time <" << t << ">ms: Process starts using the CPU" << std::endl; //ready.front()
+            waiting.pop_front();
         }
-      }
+
+        if(arrivaltime == -1){
+
+        } else if(waitingtime == -1){
+            //compare arrivaltime and cpu time...
+            if(cputime == -1){ //if theres no cpu times to compare... we have an arrival
+                t = arrivaltime;
+                ready.push_back(unarrived.front());
+                std::cout << "time <" << t << ">: Process " << unarrived.front().getname() << " arrivedl added to ready queue ";
+                printqueue(ready);
+                unarrived.pop_front();
+            } else {//compare arrivaltime and cpu time...
+                if(arrivaltime > cputime){
+
+                } else {
+
+                }
+            }
+
+        } else if(cputime == -1){
+        
+        } else { //if we get here that means all 3 queues are occupied... god help us
+
+        }
     }
+    // while(!ready.empty() || !waiting.empty() || !unarrived.empty()){ //if any statement is true we have work to do still...
+    //     if(waiting.size() > 1) waiting.sort(compcurwait); //update wait ordering...
+    //     if((!waiting.empty() && unarrived.front().getarrivaltime() < waiting.front().getcurrentwait()) //next "interesting" event is process arrival
+    //         && unarrived.front().getarrivaltime() < ready.front().getarrivaltime()) {
+    //         int gap = t - unarrived.front().getarrivaltime();
+    //         t = unarrived.front().getarrivaltime();
+    //         ready.push_back(unarrived.front());
+    //         unarrived.pop_front();
+    //         std::cout << "time <" << t << ">ms: Process \"" << ready.back().getname() << "\" arrived; added to ready queue ";
+    //         printqueue(ready);
+    //         //decrement all the other times by gap
+    //   } else if(!waiting.empty() && waiting.front().getcurrentwait() < ready.front().getcurrentruntime()) { //next "interesting" event is finishing I/O
+    //   	ready.push_back(waiting.front());
+    //     waiting.pop_front();
+    //   } else { //next "interesting" event is CPU burst completion/termination
+    //     if (ready.front().getcurrentwait() == -1 ){ //process terminates
+    //       std::cout << "time <" << t << ">ms: Process finishes using the CPU" << std::endl;
+    //     	std::cout << "time <" << t << ">ms: Process Terminates" << std::endl;
+    //     } else {
+    //       waiting.push_back(ready.front()); //process in cpu moved to waiting state for I/O
+    //       ready.pop_front();
+    //       std::cout << "time <" << t << ">ms: Process finishes using the CPU" << std::endl;
+    //        //t = t + context switch
+    //       std::cout << "time <" << t << ">ms: Process starts performing I/O" << std::endl; //waiting.back()
+    //       std::cout << "time <" << t << ">ms: Process starts using the CPU" << std::endl; //ready.front()
+    //     }
+    //   }
+    // }
 }
 #endif

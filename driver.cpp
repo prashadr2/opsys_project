@@ -59,7 +59,7 @@ int main(int argc, char** argv){
         for(int y = 0; y < burstamt; y++){
             cputimes.push_back((int)ceil(nextrandnum(lambda,upperbound)));
             if(y == burstamt - 1){ //last cpu burst
-                iotimes.push_back(-1); //-1 val means NO ioburst on this run... make sure to reflect this in algorithms!!
+                iotimes.push_back(-2); //-1 val means NO ioburst on this run... make sure to reflect this in algorithms!!
             } else {
                 iotimes.push_back((int)ceil(nextrandnum(lambda,upperbound)));
             }
@@ -72,7 +72,7 @@ int main(int argc, char** argv){
     rrtest();
 
 
-// g++ -D DEBUG_MODE -o a.o driver.cpp    
+// g++ -g -D DEBUG_MODE -o a.o driver.cpp && ./a.o 8 64 0.001 4096 4 0.5 2048
 
 // Test 2     ./a.out 1 2 0.01 256 4 0.5 128
 
