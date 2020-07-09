@@ -72,6 +72,16 @@ int main(int argc, char** argv){
     rrtest();
 
 
+// g++ -D DEBUG_MODE -o a.o driver.cpp    
+
+// Test 2     ./a.out 1 2 0.01 256 4 0.5 128
+
+// Test 3     ./a.out 2 2 0.01 256 4 0.5 128
+
+// Test 4     ./a.out 16 2 0.01 256 4 0.75 64
+
+// Test 5     ./a.out 8 64 0.001 4096 4 0.5 2048
+
     outfile.close();
     return EXIT_SUCCESS;
 }

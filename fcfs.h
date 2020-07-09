@@ -14,34 +14,44 @@
 //custom includes
 #include "process.h"
 
-void fcfs(std::ofstream& outfile, std::vector<Process>& p);
+void fcfs(std::ofstream& outfile, const std::vector<Process>& p);
 void printqueue(std::list<Process>& printer);
 
 void printqueue(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE CHAR!!!
   std::cout << "[Q";
+  if(printer.size() == 0){
+      std::cout << " <empty>]" << std::endl;
+      return;
+  }
   for(std::list<Process>::iterator z = printer.begin(); z != printer.end(); z++) std::cout << ' ' << z->getname();
   std::cout << "]" << std::endl;
 }
 
-void fcfs(std::ofstream& outfile, std::vector<Process>& p){
+void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
     outfile << "Algorithm FCFS\n"; //write to file test... working
+
     int t = 0; //time
-  	
   	std::list<Process> unarrived;
-    for(int z = 0; z < p.size(); z++) unarrived.push_back(p[z]);
- 	std::list<Process> ready; //first positon in ready queue IS THE PROCESS CURRENTLY IN THE CPU
+    std::list<Process> ready; //first positon in ready queue IS THE PROCESS CURRENTLY IN THE CPU
     std::list<Process> waiting;
-  
-  	unarrived.sort([](Process p1, Process p2) -> bool {return p1.getarrivaltime() < p2.getarrivaltime();});
+
+    for(Process z : p) unarrived.push_back(Process(z)); //use deep copy to not modify the input
+    unarrived.sort([](Process p1, Process p2) -> bool {return p1.getname() < p2.getname();}); //sort by names for printing first
+   
+    for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
+        std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU bursts" << std::endl;
+    }
+    std::cout << "time <0>ms: Simulator started for FCFS ";
+    printqueue(ready);
+
+  	unarrived.sort([](Process p1, Process p2) -> bool {return p1.getarrivaltime() < p2.getarrivaltime();}); //sorting for actual program.
    	t = unarrived.front().getarrivaltime();
   	ready.push_back(unarrived.front());
     unarrived.pop_front();
-  	for(std::list<Process>::iterator zit = unarrived.begin(); zit != unarrived.end(); zit++){
+    for(std::list<Process>::iterator zit = unarrived.begin(); zit != unarrived.end(); zit++){
      	if(zit->getarrivaltime() == t) ready.push_back(*zit);
     }
-    ready.sort([](Process p1, Process p2) -> bool {return p1.getname() < p2.getname();});
-    
-    std::cout << "time <0>ms: Start of simulation [Q ]" << std::endl;
+    ready.sort([](Process p1, Process p2) -> bool {return p1.getname() < p2.getname();}); //ready is forced to have the same arrival time at this point...
   	
   	while(!ready.empty() && !waiting.empty() && !unarrived.empty()){
       if(unarrived.front().getarrivaltime() < waiting.front().getcurrentwait() //next "interesting" event is process arrival
@@ -73,8 +83,4 @@ void fcfs(std::ofstream& outfile, std::vector<Process>& p){
       }
     }
 }
-
-//rm -rf .git/refs/remotes/origin/
-//./a.o 5 231313123213123123 0.001343232423 545 5 5 5
-//g++ -D DEBUG_MODE -o a.o driver.cpp
 #endif
