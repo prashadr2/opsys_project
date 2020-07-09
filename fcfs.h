@@ -42,8 +42,6 @@ void fcfs(std::ofstream& outfile, std::vector<Process>& p){
     ready.sort([](Process p1, Process p2) -> bool {return p1.getname() < p2.getname();});
     
     std::cout << "time <0>ms: Start of simulation [Q ]" << std::endl;
-  
-  
   	
   	while(!ready.empty() && !waiting.empty() && !unarrived.empty()){
       if(unarrived.front().getarrivaltime() < waiting.front().getcurrentwait() //next "interesting" event is process arrival
