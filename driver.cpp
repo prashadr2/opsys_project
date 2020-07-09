@@ -55,7 +55,7 @@ int main(int argc, char** argv){
         std::list<int> cputimes;
         std::list<int> iotimes;
         int arrivaltime = (int)floor(nextrandnum(lambda,upperbound));
-        int burstamt = (int)trunc(nextrandnum(lambda,upperbound) * 100) + 1;
+        int burstamt = (int)trunc(drand48() * 100) + 1;
         for(int y = 0; y < burstamt; y++){
             cputimes.push_back((int)ceil(nextrandnum(lambda,upperbound)));
             if(y == burstamt - 1){ //last cpu burst
