@@ -90,7 +90,19 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
         } else if(cputime == -1){
         
         } else { //if we get here that means all 3 queues are occupied... god help us
+            if(arrivaltime < waitingtime && arrivaltime < cputime){ //process arrival
+                t = arrivaltime;
+                ready.push_back(unarrived.front());
+                std::cout << "time <" << t << ">: Process " << unarrived.front().getname() << " arrivedl added to ready queue ";
+                printqueue(ready);
+                unarrived.pop_front();
+            }
+            else if(waitingtime < arrivaltime && waitingtime < cputime){ //process finishes I/O
 
+            }
+            else{ //process completes CPU burst
+
+            }
         }
     }
     // while(!ready.empty() || !waiting.empty() || !unarrived.empty()){ //if any statement is true we have work to do still...
