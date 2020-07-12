@@ -13,7 +13,7 @@
 //custom includes
 #include "process.h"
 
-void fcfs(std::ofstream& outfile, const std::vector<Process>& p);
+void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs);
 void printqueue(std::list<Process>& printer);
 
 void printqueue(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE CHAR!!!
@@ -28,13 +28,14 @@ void printqueue(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE C
 
 //arrival time, cpu start, cpu end(io start), io end
 
-void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
+void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
     outfile << "Algorithm FCFS\n"; //write to file test... working
 
     int t = 0; //time
   	std::list<Process> unarrived;
     std::list<Process> ready; //first positon in ready queue IS THE PROCESS CURRENTLY IN THE CPU
     std::list<Process> waiting;
+    Process* incpu = NULL; //needs to be a pointer so we can dynammically call the process deep copy constructor
     auto compname = [](Process p1, Process p2) -> bool {return p1.getname() < p2.getname();};
     auto comparrival = [](Process p1, Process p2) -> bool {if(p1.getarrivaltime() == p2.getarrivaltime()) return p1.getname() < p2.getname(); else return p1.getarrivaltime() < p2.getarrivaltime();};
     auto compcurwait = [](Process p1, Process p2) -> bool {if(p1.getcurrentwait() == p2.getcurrentwait()) return p1.getname() < p2.getname(); else return p1.getcurrentwait() < p2.getcurrentwait();};
@@ -42,7 +43,7 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
     std::vector<int> waitavg; //push back to here each wait time (io block)
     for(Process z : p) unarrived.push_back(Process(z)); //use deep copy to not modify the input
     unarrived.sort(compname); //sort by names for printing first
-   
+    
     for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
         std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU bursts" << std::endl;
     }
@@ -62,12 +63,20 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
         if(waiting.size() > 1) waiting.sort(compcurwait); //update wait ordering...
         int waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1; //if this val is -1, wait queue is empty, if it is -2, TERMINATE THE PROCESS!!!!
         int arrivaltime = !unarrived.empty() ? unarrived.front().getarrivaltime() : -1;
-        int cputime =  !ready.empty() ? ready.front().getcurrentruntime() : -1;
+        // int cputime =  !ready.empty() ? ready.front().getcurrentruntime() : -1;
+        int cputime = (incpu != NULL) ? incpu->getcurrentruntime() : -1; //MAKE SURE TO FREE INCPU AND SET TO NULL AFTER WE COPY IT INTO WAITING QUEUE (waitingqueue.push_back(Process(*incpu)))
         if(waitingtime == -2){
-            std::cout << "time " << t << ": Process " << waiting.front().getname() << " terminated "; 
+            std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " terminated "; 
             printqueue(ready);
             waiting.pop_front();
         }
+        if(incpu == NULL && !ready.empty()){
+            incpu = new Process(ready.front());
+            ready.pop_front();
+            t += tcs / 2; 
+            std::cout << "time " << t << "ms: Process " << incpu->getname() << "started using the cpu for " << incpu->getcurrentruntime() << "ms burst ";
+            printqueue(ready);
+        } 
         // std::cout << waitingtime << ' ' << arrivaltime << ' ' << cputime << std::endl;
         if(arrivaltime == -1){
 
@@ -77,7 +86,7 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
                 t = arrivaltime;
                 while(!unarrived.empty() && unarrived.front().getarrivaltime() == t){
                     ready.push_back(unarrived.front());
-                    std::cout << "time <" << t << ">: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                    std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
                     printqueue(ready);
                     unarrived.pop_front();
                 }
