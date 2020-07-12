@@ -109,7 +109,7 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                     free(incpu);
                     incpu = NULL;
                 } else {
-                    int gap = arrivaltime - t;
+                    int gap = abs(arrivaltime - t);
                     t += gap;
                     incpu->decreaseruntime(gap); //need to handle the process currently running also
                     while(!unarrived.empty() && unarrived.front().getarrivaltime() == t){
@@ -124,18 +124,51 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
         } else if(cputime == -1){
         
         } else { //if we get here that means all 3 queues are occupied... god help us
-            if(arrivaltime < waitingtime && arrivaltime < cputime){ //process arrival
-                t = arrivaltime;
-                ready.push_back(unarrived.front());
-                std::cout << "time <" << t << ">: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                printqueue(ready);
-                unarrived.pop_front();
-            }
-            else if(waitingtime < arrivaltime && waitingtime < cputime){ //process finishes I/O
+            if(abs(arrivaltime - t) <= waitingtime && abs(arrivaltime - t) <= cputime){ //process arrival
+                int gap = abs(arrivaltime - t);
+                t += gap;
+                incpu->decreaseruntime(gap); //need to handle the process currently running also
+                while(!unarrived.empty() && unarrived.front().getarrivaltime() == t){
+                    ready.push_back(unarrived.front());
+                    std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                    printqueue(ready);
+                    unarrived.pop_front();
+                }
+                //the gap MUST not go over the smallest waitingtime by the if statement...
+                for(auto & w : waiting){
+                    if(w.getcurrentwait() - gap == 0){ //if the remainder wait time is the same as arrival time difference
+                        Process adder(w);
+                        //TODO: remove w from waiting at this line!!!!!!
+                        adder.movenextwait();
+                        std::cout << "time " << t << "ms: Process " << adder.getname() << " completed I/O; added to ready queue";
+                        ready.push_back(Process(adder));
+                        printqueue(ready);
 
-            }
-            else{ //process completes CPU burst
+                    } else { //just decrease wait time
+                        w.decreasewaittime(gap);
+                    }
+                }
+                //need to edit cputime...
+                if(cputime == gap) {//take cpu out and go into waiting
+                    incpu->movenextruntime();//will be removed next run...
+                    incpu->decreaseburst(); 
+                    incpu->movenextruntime(); //make sure we do movenextwaittime() on the front of waitingqueue if we are done waiting
+                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " completed a CPU burst; " << incpu->getbursts() << " bursts to go ";
+                    printqueue(ready);
+                    waiting.push_back(Process(*incpu));
+                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " switching out of CPU; will block on I/O until time " << t+incpu->getcurrentwait() << "ms ";
+                    printqueue(ready);
+                    free(incpu);
+                    incpu = NULL;
+                } else {//just decrease time
+                    incpu->decreaseruntime(gap);
+                }
+            } else if(waitingtime <= arrivaltime && waitingtime <= cputime){ //process finishes I/O
 
+            } else if(cputime <= waitingtime && cputime <= waitingtime){ //process completes CPU burst
+
+            } else{
+                std::cout << "what case even makes this run???????????????????????????????????" << std::endl;
             }
         }
     }
@@ -148,7 +181,6 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                     //         if(cmp < 0 || cmp == 0){ //if the time will be under OR done
 
                     //         } else{
-
                     //         }
                     //     }
                     // }
