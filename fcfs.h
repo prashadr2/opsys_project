@@ -75,10 +75,12 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
             //compare arrivaltime and cpu time...
             if(cputime == -1){ //if theres no cpu times to compare... we have an arrival
                 t = arrivaltime;
-                ready.push_back(unarrived.front());
-                std::cout << "time <" << t << ">: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                printqueue(ready);
-                unarrived.pop_front();
+                while(!unarrived.empty() && unarrived.front().getarrivaltime() == t){
+                    ready.push_back(unarrived.front());
+                    std::cout << "time <" << t << ">: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                    printqueue(ready);
+                    unarrived.pop_front();
+                }
             } else {//compare arrivaltime and cpu time...
                 if(arrivaltime > cputime){
                     int gap = t - cputime;
