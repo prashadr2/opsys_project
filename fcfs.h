@@ -6,7 +6,6 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
-#include <queue>
 #include <list>
 //c includes
 #include <stdlib.h>
@@ -39,22 +38,23 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
     auto compname = [](Process p1, Process p2) -> bool {return p1.getname() < p2.getname();};
     auto comparrival = [](Process p1, Process p2) -> bool {if(p1.getarrivaltime() == p2.getarrivaltime()) return p1.getname() < p2.getname(); else return p1.getarrivaltime() < p2.getarrivaltime();};
     auto compcurwait = [](Process p1, Process p2) -> bool {if(p1.getcurrentwait() == p2.getcurrentwait()) return p1.getname() < p2.getname(); else return p1.getcurrentwait() < p2.getcurrentwait();};
-
+    std::vector<int> burstavg; //push back to here each burst time
+    std::vector<int> waitavg; //push back to here each wait time (io block)
     for(Process z : p) unarrived.push_back(Process(z)); //use deep copy to not modify the input
     unarrived.sort(compname); //sort by names for printing first
    
     for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
         std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU bursts" << std::endl;
     }
-    std::cout << "time <0>ms: Simulator started for FCFS ";
+    std::cout << "time 0ms: Simulator started for FCFS ";
     printqueue(ready);
 
   	unarrived.sort(comparrival); //sorting for actual program
-   	t = unarrived.front().getarrivaltime();
-  	ready.push_back(unarrived.front());
-    unarrived.pop_front();
-    for(auto const& z : unarrived) if(z.getarrivaltime() == t) ready.push_back(z);
-    ready.sort(compname); //ready is forced to have the same arrival time at this point...
+   	// t = unarrived.front().getarrivaltime();
+  	// ready.push_back(unarrived.front());
+    // unarrived.pop_front();
+    // for(auto const& z : unarrived) if(z.getarrivaltime() == t) ready.push_back(z);
+    // ready.sort(compname); //ready is forced to have the same arrival time at this point...
 #ifdef DEBUG_MODE
     for(auto const& debugs : ready) std::cout << "DEBUG READYQUEUE --> Process " << debugs.getname() << " (arrival time " << debugs.getarrivaltime() << " ms)" << std::endl;
 #endif
@@ -64,11 +64,11 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
         int arrivaltime = !unarrived.empty() ? unarrived.front().getarrivaltime() : -1;
         int cputime =  !ready.empty() ? ready.front().getcurrentruntime() : -1;
         if(waitingtime == -2){
-            std::cout << "time <" << t << ">: Process " << waiting.front().getname() << " terminated "; 
+            std::cout << "time " << t << ": Process " << waiting.front().getname() << " terminated "; 
             printqueue(ready);
             waiting.pop_front();
         }
-
+        // std::cout << waitingtime << ' ' << arrivaltime << ' ' << cputime << std::endl;
         if(arrivaltime == -1){
 
         } else if(waitingtime == -1){
@@ -76,11 +76,12 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p){
             if(cputime == -1){ //if theres no cpu times to compare... we have an arrival
                 t = arrivaltime;
                 ready.push_back(unarrived.front());
-                std::cout << "time <" << t << ">: Process " << unarrived.front().getname() << " arrivedl added to ready queue ";
+                std::cout << "time <" << t << ">: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
                 printqueue(ready);
                 unarrived.pop_front();
             } else {//compare arrivaltime and cpu time...
                 if(arrivaltime > cputime){
+                    int gap = t - cputime;
 
                 } else {
 
