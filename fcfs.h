@@ -191,7 +191,7 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
             //if we get here, then waitngtime and arrival time are both populated, or else we would've gone into one of the above branches
             if(waitingtime <= arrivaltime){//decrease arrivaltime by waitingtime
                 if(waitingtime == arrivaltime){
-
+//TODO
                 } else { //finish waiting and jump time
                     t += waitingtime;
                     // incpu->decreaseruntime(waitingtime);
@@ -212,7 +212,6 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                     unarrived.pop_front();
                 }
             }
-        
         } else { //if we get here that means all 3 queues are occupied... god help us
             if(abs(arrivaltime - t) <= waitingtime && abs(arrivaltime - t) <= cputime){ //process arrival
                 int gap = abs(arrivaltime - t);
@@ -253,7 +252,7 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                 } else {//just decrease time
                     incpu->decreaseruntime(gap);
                 }
-            } else if(waitingtime <= arrivaltime && waitingtime <= cputime){ //process finishes I/O
+            } else if(waitingtime <= abs(arrivaltime - t) && waitingtime <= cputime){ //process finishes I/O
                 t += waitingtime;
                 std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue";
                 waiting.front().movenextwait();
@@ -284,8 +283,31 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                     incpu->decreaseruntime(waitingtime);
                 }
 
-            } else if(cputime <= waitingtime && cputime <= waitingtime){ //process completes CPU burst
+            } else if(cputime <= waitingtime && cputime <= abs(arrivaltime - t)){ //process completes CPU burst
+                t += cputime;
+                waiting.front().decreasewaittime(cputime);
 
+                incpu->movenextruntime();//will be removed next run...
+                incpu->decreaseburst(); 
+                //incpu->movenextruntime(); //make sure we do movenextwaittime() on the front of waitingqueue if we are done waiting
+                std::cout << "time " << t << "ms: Process " << incpu->getname() << " completed a CPU burst; " << incpu->getbursts() << " bursts to go ";
+                printqueue(ready);
+                waiting.push_back(Process(*incpu));
+                std::cout << "time " << t << "ms: Process " << incpu->getname() << " switching out of CPU; will block on I/O until time " << t+incpu->getcurrentwait() << "ms ";
+                printqueue(ready);
+                free(incpu);
+                incpu = NULL;
+//                 if(cputime == waiting){
+// //TODO
+//                 } else {
+
+//                 }
+//             //
+//                 if(cputime == abs(arrivaltime - t)){
+// //TODO
+//                 } else {
+
+//                 }
             } else{
                 std::cout << "what case even makes this run???????????????????????????????????" << std::endl;
             }
