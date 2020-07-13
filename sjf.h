@@ -4,10 +4,18 @@
 //cpp includes
 #include <iostream>
 #include <vector>
+#include <fstream>
+#include <algorithm>
+#include <list>
+//c includes
+#include <stdlib.h>
+#include <math.h>
+//custom includes
+#include "process.h"
 
 void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, const int alpha, const int lambda);
-void printqueue(std::list<Process>& printer);
-void printqueue(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE CHAR!!!
+void printqueueSJF(std::list<Process>& printer);
+void printqueueSJF(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE CHAR!!!
   std::cout << "[Q";
   if(printer.size() == 0){
       std::cout << " <empty>]" << std::endl;
@@ -23,8 +31,9 @@ void printqueue(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE C
 }
 
 void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, const int alpha, const int lambda){
-    outfile << "Algorithm FCFS\n"; //write to file test... working
+    outfile << "Algorithm SJF\n"; //write to file test... working
     int t = 0; //time
+    int tau = (int)ceil(1/lambda);
     std::list<Process> unarrived;
     std::list<Process> ready; //first positon in ready queue IS THE PROCESS CURRENTLY IN THE CPU
     std::list<Process> waiting;
