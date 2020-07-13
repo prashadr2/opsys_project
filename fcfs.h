@@ -187,8 +187,31 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                     }
                 }
             }
-
         } else if(cputime == -1){
+            //if we get here, then waitngtime and arrival time are both populated, or else we would've gone into one of the above branches
+            if(waitingtime <= arrivaltime){//decrease arrivaltime by waitingtime
+                if(waitingtime == arrivaltime){
+
+                } else { //finish waiting and jump time
+                    t += waitingtime;
+                    // incpu->decreaseruntime(waitingtime);
+                    std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue";
+                    waiting.front().movenextwait();
+                    ready.push_back(Process(waiting.front()));
+                    waiting.pop_front();
+                    printqueue(ready);
+                }
+            } else { //decrease waitingtime by arrivalgap, and handle the arrival
+                int gap = abs(arrivaltime - t);
+                t += gap;
+                waiting.front().decreasewaittime(gap);
+                while(!unarrived.empty() && unarrived.front().getarrivaltime() == t){
+                    ready.push_back(unarrived.front());
+                    std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                    printqueue(ready);
+                    unarrived.pop_front();
+                }
+            }
         
         } else { //if we get here that means all 3 queues are occupied... god help us
             if(abs(arrivaltime - t) <= waitingtime && abs(arrivaltime - t) <= cputime){ //process arrival
