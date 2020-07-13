@@ -15,6 +15,8 @@
 
 void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs);
 void printqueue(std::list<Process>& printer);
+void printcpufin(Process* incpu, int t, const int tcs, std::list<Process>& ready);
+void printiofin(std::list<Process>& waiting, std::list<Process>& ready, int t);
 
 void printqueue(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE CHAR!!!
   std::cout << "[Q";
@@ -29,6 +31,21 @@ void printqueue(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE C
 #endif
   }
   std::cout << "]" << std::endl;
+}
+
+void printcpufin(Process* incpu, int t, const int tcs, std::list<Process>& ready){
+    std::cout << "time " << t << "ms: Process " << incpu->getname() << " completed a CPU burst; " << incpu->getbursts() << " bursts to go ";
+    printqueue(ready);
+    std::cout << "time " << t << "ms: Process " << incpu->getname() << " switching out of CPU; will block on I/O until time " << t+incpu->getcurrentwait()+(tcs/2) << "ms ";
+    printqueue(ready);
+}
+
+void printiofin(std::list<Process>& waiting, std::list<Process>& ready, int t){
+    std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
+    waiting.front().movenextwait();
+    ready.push_back(Process(waiting.front()));
+    waiting.pop_front();
+    printqueue(ready);
 }
 
 //arrival time, cpu start, cpu end(io start), io end
@@ -118,11 +135,7 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                     incpu = NULL;
                     continue;
                 } 
-                std::cout << "time " << t << "ms: Process " << incpu->getname() << " completed a CPU burst; " << incpu->getbursts() << " bursts to go ";
-                printqueue(ready);
-                // waiting.push_back(Process(*incpu));
-                std::cout << "time " << t << "ms: Process " << incpu->getname() << " switching out of CPU; will block on I/O until time " << t+incpu->getcurrentwait()+(tcs/2) << "ms ";
-                printqueue(ready);
+                printcpufin(incpu, t, tcs, ready);
                 delete incpu;
                 incpu = NULL;
                 // std::cout << "switch1" << std::endl;
@@ -142,12 +155,7 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
             } else if (cputime == -1) { //we just have to deal with waitingtime
                 t += waitingtime;
                 for(auto& w : waiting) w.decreasewaittime(waitingtime);
-                std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
-                waiting.front().movenextwait();
-                ready.push_back(Process(waiting.front()));
-                waiting.pop_front();
-                printqueue(ready);
-
+                printiofin(waiting, ready, t);
             } else { //need to compare waittime and cpu time
                 if(waitingtime <= cputime){ //need to finish the waiting process and decrease cputime by waitingtime (handle equal case also)
                     if(waitingtime == cputime){ //edge case
@@ -167,33 +175,21 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                             incpu = NULL;
                             continue;
                         } 
-                        std::cout << "time " << t << "ms: Process " << incpu->getname() << " completed a CPU burst; " << incpu->getbursts() << " bursts to go ";
-                        printqueue(ready);
-                        // waiting.push_back(Process(*incpu));
-                        std::cout << "time " << t << "ms: Process " << incpu->getname() << " switching out of CPU; will block on I/O until time " << t+incpu->getcurrentwait()+(tcs/2) << "ms ";
-                        printqueue(ready);
+                        printcpufin(incpu, t, tcs, ready);
                         delete incpu;;
                         incpu = NULL;
                         // std::cout << "switch1" << std::endl;
                         t += tcs /2;
                         waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0){
-                    std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
-                     waiting.front().movenextwait();
-                    ready.push_back(Process(waiting.front()));
-                    waiting.pop_front();
-                    printqueue(ready);
+                    printiofin(waiting, ready, t);
                 }
                         // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
                     } else {
                         t += waitingtime;
                         for(auto& w : waiting) w.decreasewaittime(waitingtime);
                         incpu->decreaseruntime(waitingtime);
-                        std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
-                        waiting.front().movenextwait();
-                        ready.push_back(Process(waiting.front()));
-                        waiting.pop_front();
-                        printqueue(ready);
+                        printiofin(waiting, ready, t);
                     }
                 } else { //decrease waiting time by cputime, move cpu out of processor
                     t += cputime;
@@ -208,22 +204,14 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                         incpu = NULL;
                         continue;
                     } 
-                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " completed a CPU burst; " << incpu->getbursts() << " bursts to go ";
-                    printqueue(ready);
-                    // waiting.push_back(Process(*incpu));
-                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " switching out of CPU; will block on I/O until time " << t+incpu->getcurrentwait()+(tcs/2) << "ms ";
-                    printqueue(ready);
+                    printcpufin(incpu, t, tcs, ready);
                     delete incpu;;
                     incpu = NULL;
                     // std::cout << "switch1" << std::endl;
                     t += tcs /2;
                     waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0){
-                    std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
-                     waiting.front().movenextwait();
-                    ready.push_back(Process(waiting.front()));
-                    waiting.pop_front();
-                    printqueue(ready);
+                    printiofin(waiting, ready, t);
                 }
                     // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
                 }
@@ -251,22 +239,14 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                         incpu = NULL;
                         continue;
                     } 
-                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " completed a CPU burst; " << incpu->getbursts() << " bursts to go ";
-                    printqueue(ready);
-                    // waiting.push_back(Process(*incpu));
-                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " switching out of CPU; will block on I/O until time " << t+incpu->getcurrentwait()+(tcs/2) << "ms ";
-                    printqueue(ready);
+                    printcpufin(incpu, t, tcs, ready);
                     delete incpu;
                     incpu = NULL;
                     // std::cout << "switch1" << std::endl;
                     t += tcs /2;
                     waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0){
-                    std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
-                     waiting.front().movenextwait();
-                    ready.push_back(Process(waiting.front()));
-                    waiting.pop_front();
-                    printqueue(ready);
+                    printiofin(waiting, ready, t);
                 }
                     // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
                 } else {
@@ -289,11 +269,7 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                 } else { //finish waiting and jump time
                     t += waitingtime;
                     // incpu->decreaseruntime(waitingtime);
-                    std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
-                    waiting.front().movenextwait();
-                    ready.push_back(Process(waiting.front()));
-                    waiting.pop_front();
-                    printqueue(ready);
+                    printiofin(waiting, ready, t);
                 }
             } else { //decrease waitingtime by arrivalgap, and handle the arrival
                 int gap = abs(arrivaltime - t);
@@ -343,22 +319,14 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                         incpu = NULL;
                         continue;
                     } 
-                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " completed a CPU burst; " << incpu->getbursts() << " bursts to go ";
-                    printqueue(ready);
-                    // waiting.push_back(Process(*incpu));
-                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " switching out of CPU; will block on I/O until time " << t+incpu->getcurrentwait()+(tcs/2) << "ms ";
-                    printqueue(ready);
+                    printcpufin(incpu, t, tcs, ready);
                     delete incpu;;
                     incpu = NULL;
                     // std::cout << "switch1" << std::endl;
                     t += tcs /2;
                     waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0){
-                    std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
-                     waiting.front().movenextwait();
-                    ready.push_back(Process(waiting.front()));
-                    waiting.pop_front();
-                    printqueue(ready);
+                    printiofin(waiting, ready, t);
                 }
                     // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
                 } else {//just decrease time
@@ -367,11 +335,7 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
             } else if(waitingtime <= abs(arrivaltime - t) && waitingtime <= cputime){ //process finishes I/O
                 t += waitingtime;
                 for(auto& w : waiting) w.decreasewaittime(waitingtime);
-                std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
-                waiting.front().movenextwait();
-                ready.push_back(Process(waiting.front()));
-                waiting.pop_front();
-                printqueue(ready);
+                printiofin(waiting, ready, t);
                 if(arrivaltime == t){ //arrival at same time that waiting is over
                     while(!unarrived.empty() && unarrived.front().getarrivaltime() == t){
                         ready.push_back(unarrived.front());
@@ -391,22 +355,14 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                         incpu = NULL;
                         continue;
                     } 
-                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " completed a CPU burst; " << incpu->getbursts() << " bursts to go ";
-                    printqueue(ready);
-                    // waiting.push_back(Process(*incpu));
-                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " switching out of CPU; will block on I/O until time " << t+incpu->getcurrentwait()+(tcs/2) << "ms ";
-                    printqueue(ready);
+                     printcpufin(incpu, t, tcs, ready);
                     delete incpu;;
                     incpu = NULL;
                     // std::cout << "switch1" << std::endl;
                     t += tcs /2;
                     waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0){
-                    std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
-                     waiting.front().movenextwait();
-                    ready.push_back(Process(waiting.front()));
-                    waiting.pop_front();
-                    printqueue(ready);
+                    printiofin(waiting, ready, t);printiofin(waiting, ready, t);
                 }
                     // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
                 } else { //decreasee runtime
@@ -428,22 +384,14 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                     incpu = NULL;
                     continue;
                 } 
-                std::cout << "time " << t << "ms: Process " << incpu->getname() << " completed a CPU burst; " << incpu->getbursts() << " bursts to go ";
-                printqueue(ready);
-                // waiting.push_back(Process(*incpu));
-                std::cout << "time " << t << "ms: Process " << incpu->getname() << " switching out of CPU; will block on I/O until time " << t+incpu->getcurrentwait()+(tcs/2) << "ms ";
-                printqueue(ready);
+                printcpufin(incpu, t, tcs, ready);
                 delete incpu;;
                 incpu = NULL;
                 // std::cout << "switch1" << std::endl;
                 t += tcs /2;
                 waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0){
-                    std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
-                     waiting.front().movenextwait();
-                    ready.push_back(Process(waiting.front()));
-                    waiting.pop_front();
-                    printqueue(ready);
+                    printiofin(waiting, ready, t);
                 }
                 // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
             } else{
