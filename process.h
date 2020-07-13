@@ -60,9 +60,11 @@ class Process{
     int getcurrentruntime() {return cpu_time.front();}
     void movenextruntime() {cpu_time.pop_front();}
     void decreaseruntime(int d) {*(cpu_time.begin()) -= d;}
+    
     void setPreviousBurst(int b) {previousBurst = b;}
     int getPreviousBurst() const {return previousBurst;}
 
+    void setTau(int tt) {tau = tt;}
     int getTau() const {return tau;}
     void recalculateTau(int alpha) {tau = (alpha * previousBurst) + ((1 - alpha) * tau);}
 

@@ -30,7 +30,7 @@ void printqueueSJF(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLIN
   std::cout << "]" << std::endl;
 }
 
-void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, const int alpha, const int lambda){
+void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, const int alpha, const double lambda){
     outfile << "Algorithm SJF\n"; //write to file test... working
     int t = 0; //time
     int tau = (int)ceil(1/lambda);
@@ -41,6 +41,21 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
     auto compname = [](Process p1, Process p2) -> bool {return p1.getname() < p2.getname();};
     auto comparrival = [](Process p1, Process p2) -> bool {if(p1.getarrivaltime() == p2.getarrivaltime()) return p1.getname() < p2.getname(); else return p1.getarrivaltime() < p2.getarrivaltime();};
     auto compcurwait = [](Process p1, Process p2) -> bool {if(p1.getcurrentwait() == p2.getcurrentwait()) return p1.getname() < p2.getname(); else return p1.getcurrentwait() < p2.getcurrentwait();};
+    for(Process z : p){
+        Process pusher(z);
+        pusher.setTau(tau);
+        pusher.setPreviousBurst(pusher.getcurrentruntime());
+        unarrived.push_back(pusher);
+    }
+    unarrived.sort(compname);
+
+    for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
+        std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU bursts (tau " << z-> getTau() << "ms)" << std::endl;
+    }
+     std::cout << "time 0ms: Simulator started for SJF ";
+    printqueue(ready);
+    unarrived.sort(comparrival); //sorting for actual program
+
     
 }
 

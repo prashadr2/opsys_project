@@ -1,1 +1,1 @@
-Algorithm FCFS
+Algorithm SJF

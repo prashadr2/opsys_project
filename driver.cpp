@@ -66,7 +66,8 @@ int main(int argc, char** argv){
         }
         psetup.push_back(Process(name,arrivaltime,burstamt,cputimes,iotimes));
     }
-    fcfs(outfile, psetup, tcs);
+    
+    // fcfs(outfile, psetup, tcs);
     std::cout << std::endl;
     sjf(outfile, psetup, tcs, alpha, lambda);
     std::cout << std::endl;
