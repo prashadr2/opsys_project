@@ -68,9 +68,12 @@ int main(int argc, char** argv){
     }
     fcfs(outfile, psetup, tcs);
     std::cout << std::endl;
-    sjftest();
+    sjf(outfile, psetup, tcs, alpha, lambda);
+    std::cout << std::endl;
     srttest();
+    std::cout << std::endl;
     rrtest();
+    std::cout << std::endl;
 
 
 // g++ -g -D DEBUG_MODE -o a.o driver.cpp && ./a.o 8 64 0.001 4096 4 0.5 2048

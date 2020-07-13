@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 
-void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, const int alpha);
+void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, const int alpha, const int lambda);
 void printqueue(std::list<Process>& printer);
 void printqueue(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE CHAR!!!
   std::cout << "[Q";
@@ -22,7 +22,7 @@ void printqueue(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE C
   std::cout << "]" << std::endl;
 }
 
-void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, const int alpha){
+void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, const int alpha, const int lambda){
     outfile << "Algorithm FCFS\n"; //write to file test... working
     int t = 0; //time
     std::list<Process> unarrived;
