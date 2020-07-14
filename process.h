@@ -66,7 +66,7 @@ class Process{
 
     void setTau(int tt) {tau = tt;}
     int getTau() const {return tau;}
-    void recalculateTau(int alpha) {tau = (alpha * previousBurst) + ((1 - alpha) * tau);}
+    void recalculateTau(int alpha) {tau = (alpha * previousBurst) + ((1 - alpha) * tau);} //recalculate before print
 
     private:
     std::string name;

@@ -77,7 +77,7 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
     for(auto const& debugs : ready) std::cout << "DEBUG READYQUEUE --> Process " << debugs.getname() << " (arrival time " << debugs.getarrivaltime() << " ms)" << std::endl;
 #endif
     while(!ready.empty() || !waiting.empty() || !unarrived.empty() || incpu != NULL){ //if any statement is true we have work to do still...
-        // if(t > 340000) break;
+        // if(t > 7500) break;
         if(waiting.size() > 1) waiting.sort(compcurwait); //update wait ordering...
         int waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1; //if this val is -1, wait queue is empty, if it is -2, TERMINATE THE PROCESS!!!!
         int arrivaltime = !unarrived.empty() ? unarrived.front().getarrivaltime() : -1;
@@ -139,7 +139,6 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                 printcpufin(incpu, t, tcs, ready);
                 delete incpu;
                 incpu = NULL;
-                // std::cout << "switch1" << std::endl;
                 t += tcs /2;
                 waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0){
@@ -149,10 +148,6 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                     waiting.pop_front();
                     printqueue(ready);
                 }
-                // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
-                    
-                //incpu->movenextruntime(); //make sure we do movenextwaittime() on the front of waitingqueue if we are done waiting
-                
             } else if (cputime == -1) { //we just have to deal with waitingtime
                 t += waitingtime;
                 for(auto& w : waiting) w.decreasewaittime(waitingtime);
@@ -182,10 +177,9 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                         // std::cout << "switch1" << std::endl;
                         t += tcs /2;
                         waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0){
-                    printiofin(waiting, ready, t);
-                }
-                        // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
+                        if(waitingtime <= 0){
+                            printiofin(waiting, ready, t);
+                        }
                     } else {
                         t += waitingtime;
                         for(auto& w : waiting) w.decreasewaittime(waitingtime);
@@ -334,6 +328,7 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                     incpu->decreaseruntime(gap);
                 }
             } else if(waitingtime <= abs(arrivaltime - t) && waitingtime <= cputime){ //process finishes I/O
+                // std::cout << "switchfdsjflsdajlksdajflksdafjfjddfkl;asfd;lk" << std::endl;
                 t += waitingtime;
                 for(auto& w : waiting) w.decreasewaittime(waitingtime);
                 printiofin(waiting, ready, t);
@@ -363,10 +358,12 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                     t += tcs /2;
                     waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0){
+                    // std::cout << "switch2" << std::endl;
                     printiofin(waiting, ready, t);printiofin(waiting, ready, t);
                 }
                     // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
                 } else { //decreasee runtime
+                // std::cout << "switch3" << std::endl;
                     for(auto& w : waiting) w.decreasewaittime(waitingtime);
                     incpu->decreaseruntime(waitingtime);
                 }
