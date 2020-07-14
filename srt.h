@@ -57,21 +57,26 @@ bool preemption_ioSRT(Process*& incpu, std::list<Process>& ready, std::list<Proc
     if(ready.size() > 1) ready.sort(sortfunc);
     std::cout << "time " << t << "ms: Process " << ready.front().getname() << " (tau " << ready.front().getTau() << "ms) completed I/O; preempting " << incpu->getname() << ' ';
     printqueueSRT(ready);
-
     waiting.pop_front();
-    // Process tmprdyback(ready.back());
-    // Process tmpincpu(*incpu);
     ready.push_back(*incpu);
     if(ready.size() > 1) ready.sort(sortfunc);
     delete incpu;
     incpu = NULL;
-    // ready.pop_back();
-    // ready.push_back(*incpu);
-    // incpu = new Process(tmprdyback);;
-    // std::cout << "time " << t << "ms: Process " << ready.back().getname() << " (tau " << ready.back().getTau() << "ms) completed I/O; preempting " << incpu->getname() << ' ';
-    // printqueueSRT(ready);
     t += tcs/2;
     for(auto& w : waiting) w.decreasewaittime(tcs/2);
+    int waitingtime = waiting.front().getcurrentwait();
+    if(waitingtime <= 0) {
+        waiting.front().movenextwait();
+        ready.push_back(Process(waiting.front()));
+        // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,sortfunc)) continue;
+        ready.sort(sortfunc);
+        if(waitingtime == -1){
+            printiofinSRT(waiting, ready, t-1);
+        } else {
+            printiofinSRT(waiting, ready, t);
+        }
+        waiting.pop_front();
+    }
     return true;
 }
 
@@ -96,7 +101,7 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
     auto compname = [](Process p1, Process p2) -> bool {return p1.getname() < p2.getname();};
     auto comparrival = [](Process p1, Process p2) -> bool {if(p1.getarrivaltime() == p2.getarrivaltime()) return p1.getname() < p2.getname(); else return p1.getarrivaltime() < p2.getarrivaltime();};
     auto compcurwait = [](Process p1, Process p2) -> bool {if(p1.getcurrentwait() == p2.getcurrentwait()) return p1.getname() < p2.getname(); else return p1.getcurrentwait() < p2.getcurrentwait();};
-    auto comptau = [](Process p1, Process p2) -> bool {if(p1.getTau() == p2.getTau()) return p1.getname() < p2.getname(); else return p1.getTau() < p2.getTau();};
+    auto comptau = [](Process p1, Process p2) -> bool {if(p1.getTau() - (p1.getPreviousBurst() - p1.getcurrentruntime()) == p2.getTau() - (p2.getPreviousBurst() - p2.getcurrentruntime())) return p1.getname() < p2.getname(); else return p1.getTau() - (p1.getPreviousBurst() - p1.getcurrentruntime()) < p2.getTau() - (p2.getPreviousBurst() - p2.getcurrentruntime());};
     for(Process z : p){
         Process pusher(z);
         pusher.setTau(tau);
@@ -115,7 +120,7 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
 
     while(!ready.empty() || !waiting.empty() || !unarrived.empty() || incpu != NULL){
 #ifdef DEBUG_MODE
-    if(t > 15500) break;
+    if(t > 375000) break;
 #endif
         if(waiting.size() > 1) waiting.sort(compcurwait);
         if(ready.size() > 1) ready.sort(comptau);
@@ -145,10 +150,27 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 if(waiting.size() > 1) waiting.sort(compcurwait);
                 waitingtime = waiting.front().getcurrentwait();
             }
+            if(!waiting.empty()){
+                waitingtime = waiting.front().getcurrentwait();
+                if(waitingtime <= 0) {
+                    waiting.front().movenextwait();
+                    ready.push_back(Process(waiting.front()));
+                    if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
+                    ready.sort(comptau);
+                    if(waitingtime == -1){
+                        printiofinSRT(waiting, ready, t-1);
+                    } else {
+                        printiofinSRT(waiting, ready, t);
+                    }
+                    waiting.pop_front();
+                }
+            }
             if(ready.size() > 1) ready.sort(comptau);
             std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU with " << incpu->getcurrentruntime() << "ms burst remaining ";
             printqueueSRT(ready);
             cputime = incpu->getcurrentruntime();
+        } else {
+            
         }
 #ifdef DEBUG_MODE
     std::cout << "DEBUG -->waitingtime: " << waitingtime << " arrivaltime: " << abs(arrivaltime - t) << " cputime: " << cputime << " ▼▼▼▼▼▼▼▼▼" << std::endl;
@@ -187,6 +209,21 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
             if(ready.size() > 1) ready.sort(comptau);
             printiofinSRT(waiting,ready,t);
             waiting.pop_front();
+            if(!waiting.empty()){
+                waitingtime = waiting.front().getcurrentwait();
+                if(waitingtime <= 0) {
+                    waiting.front().movenextwait();
+                    ready.push_back(Process(waiting.front()));
+                    if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
+                    ready.sort(comptau);
+                    if(waitingtime == -1){
+                        printiofinSRT(waiting, ready, t-1);
+                    } else {
+                        printiofinSRT(waiting, ready, t);
+                    }
+                    waiting.pop_front();
+                }
+            }
         } else if(waitingtime == -1 && cputime == -1){ //we have an arrival
             t = arrivaltime;
             ready.push_back(Process(unarrived.front()));
@@ -205,6 +242,21 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 if(ready.size() > 1) ready.sort(comptau);
                 printiofinSRT(waiting,ready,t);
                 waiting.pop_front();
+                if(!waiting.empty()){
+                    waitingtime = waiting.front().getcurrentwait();
+                    if(waitingtime <= 0) {
+                        waiting.front().movenextwait();
+                        ready.push_back(Process(waiting.front()));
+                        if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
+                        ready.sort(comptau);
+                        if(waitingtime == -1){
+                            printiofinSRT(waiting, ready, t-1);
+                        } else {
+                            printiofinSRT(waiting, ready, t);
+                        }
+                        waiting.pop_front();
+                    }
+                }
             } else {
                 t+= cputime;
                 for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
@@ -222,18 +274,20 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 incpu->setPreviousBurst(incpu->getcurrentruntime());
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
-                waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0) {
-                    waiting.front().movenextwait();
-                    ready.push_back(Process(waiting.front()));
-                    if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
-                    ready.sort(comptau);
-                    if(waitingtime == -1){
-                        printiofinSRT(waiting, ready, t-1);
-                    } else {
-                        printiofinSRT(waiting, ready, t);
+                if(!waiting.empty()){
+                    waitingtime = waiting.front().getcurrentwait();
+                    if(waitingtime <= 0) {
+                        waiting.front().movenextwait();
+                        ready.push_back(Process(waiting.front()));
+                        if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
+                        ready.sort(comptau);
+                        if(waitingtime == -1){
+                            printiofinSRT(waiting, ready, t-1);
+                        } else {
+                            printiofinSRT(waiting, ready, t);
+                        }
+                        waiting.pop_front();
                     }
-                    waiting.pop_front();
                 }
                 delete incpu;
                 incpu = NULL;
@@ -265,7 +319,21 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
                 waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0) printiofin(waiting, ready, t);
+                if(!waiting.empty()){
+                    waitingtime = waiting.front().getcurrentwait();
+                    if(waitingtime <= 0) {
+                        waiting.front().movenextwait();
+                        ready.push_back(Process(waiting.front()));
+                        if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
+                        ready.sort(comptau);
+                        if(waitingtime == -1){
+                            printiofinSRT(waiting, ready, t-1);
+                        } else {
+                            printiofinSRT(waiting, ready, t);
+                        }
+                        waiting.pop_front();
+                    }
+                }
                 delete incpu;
                 incpu = NULL;
             }
@@ -287,6 +355,21 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " (tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
                 printqueueSRT(ready);
                 unarrived.pop_front();
+                if(!waiting.empty()){
+                    waitingtime = waiting.front().getcurrentwait();
+                    if(waitingtime <= 0) {
+                        waiting.front().movenextwait();
+                        ready.push_back(Process(waiting.front()));
+                        if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
+                        ready.sort(comptau);
+                        if(waitingtime == -1){
+                            printiofinSRT(waiting, ready, t-1);
+                        } else {
+                            printiofinSRT(waiting, ready, t);
+                        }
+                        waiting.pop_front();
+                    }
+                }
             }
         } else { //triple check 
             if(cputime < waitingtime && cputime < abs(arrivaltime - t)){
@@ -306,8 +389,21 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 incpu->setPreviousBurst(incpu->getcurrentruntime());
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
-                waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0) printiofin(waiting, ready, t);
+                if(!waiting.empty()){
+                    waitingtime = waiting.front().getcurrentwait();
+                    if(waitingtime <= 0) {
+                        waiting.front().movenextwait();
+                        ready.push_back(Process(waiting.front()));
+                        if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
+                        ready.sort(comptau);
+                        if(waitingtime == -1){
+                            printiofinSRT(waiting, ready, t-1);
+                        } else {
+                            printiofinSRT(waiting, ready, t);
+                        }
+                        waiting.pop_front();
+                    }
+                }
                 delete incpu;
                 incpu = NULL;
             } else if(waitingtime < cputime && waitingtime < abs(arrivaltime - t)){
@@ -320,6 +416,21 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 if(ready.size() > 1) ready.sort(comptau);
                 printiofinSRT(waiting,ready,t);
                 waiting.pop_front();
+                if(!waiting.empty()){
+                    waitingtime = waiting.front().getcurrentwait();
+                    if(waitingtime <= 0) {
+                        waiting.front().movenextwait();
+                        ready.push_back(Process(waiting.front()));
+                        if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
+                        ready.sort(comptau);
+                        if(waitingtime == -1){
+                            printiofinSRT(waiting, ready, t-1);
+                        } else {
+                            printiofinSRT(waiting, ready, t);
+                        }
+                        waiting.pop_front();
+                    }
+                }
             } else if(abs(arrivaltime - t) < cputime && abs(arrivaltime - t) < waitingtime){
                 int gap = abs(arrivaltime - t);
                 t = arrivaltime;
@@ -330,6 +441,21 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " (tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
                 printqueueSRT(ready);
                 unarrived.pop_front();
+                if(!waiting.empty()){
+                    waitingtime = waiting.front().getcurrentwait();
+                    if(waitingtime <= 0) {
+                        waiting.front().movenextwait();
+                        ready.push_back(Process(waiting.front()));
+                        if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
+                        ready.sort(comptau);
+                        if(waitingtime == -1){
+                            printiofinSRT(waiting, ready, t-1);
+                        } else {
+                            printiofinSRT(waiting, ready, t);
+                        }
+                        waiting.pop_front();
+                    }
+                }
             } else {
                 std::cout << "bad vibes" << std::endl;
             }
