@@ -240,9 +240,7 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
                     // std::cout << "switch1" << std::endl;
                     t += tcs /2;
                     waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0){
-                    printiofin(waiting, ready, t);
-                }
+                    if(waitingtime <= 0) printiofin(waiting, ready, t);
                     // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
                 } else {
                     int gap = abs(arrivaltime - t);

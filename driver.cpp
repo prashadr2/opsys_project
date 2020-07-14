@@ -42,7 +42,7 @@ int main(int argc, char** argv){
     double lambda = (double)atof(argv[3]);
     int upperbound = atoi(argv[4]);
     int tcs = atoi(argv[5]); //positive even int
-    int alpha = atoi(argv[6]); //correct type??
+    double alpha = (double)atof(argv[6]); //correct type??
     int tslice = atoi(argv[7]);
     std::string rradd("END");
     if(argc == 9) rradd = argv[8];
