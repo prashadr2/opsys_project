@@ -65,7 +65,9 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
     unarrived.sort(compname);
 
     for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
-        std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU bursts " << std::endl;
+        if(z->getarrivaltime() == 1)
+            std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU burst " << std::endl;
+        else std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU bursts " << std::endl;
     }
      std::cout << "time 0ms: Simulator started for FCFS ";
     printqueueport(ready);
@@ -172,9 +174,16 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
                 waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0){
-                    printiofinport(waiting, ready, t);
-                    ready.push_back(Process(*incpu));
+                if(waitingtime <= 0) {
+                    waiting.front().movenextwait();
+                    ready.push_back(Process(waiting.front()));
+                    if(waitingtime == -1) {
+                        printiofinport(waiting, ready, t-1);
+                    }
+                    else {
+                        printiofinport(waiting, ready, t);
+                    }
+                    waiting.pop_front();
                 }
                 delete incpu;
                 incpu = NULL;
