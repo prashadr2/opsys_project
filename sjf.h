@@ -147,8 +147,8 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 for(auto& w : waiting) w.decreasewaittime(waitingtime);
                 waiting.front().movenextwait();
                 ready.push_back(Process(waiting.front()));
-                waiting.pop_front();
                 printiofinSJF(waiting,ready,t);
+                waiting.pop_front();
             } else {
                 t+= cputime;
                 for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
@@ -164,11 +164,9 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
             }
         } else if(waitingtime == -1){ //no waiting, compare arrival/cpu
             if(abs(arrivaltime - t) < cputime){
+                int gap = abs(arrivaltime - t);
                 t = arrivaltime;
-                std::cout << "pregap: " << incpu->getcurrentruntime() << std::endl;
-                std::cout << incpu << std::endl;
-                incpu->decreaseruntime(abs(arrivaltime - t));
-                std::cout << "postgap: " << incpu->getcurrentruntime() << std::endl;
+                incpu->decreaseruntime(gap);
                 ready.push_back(Process(unarrived.front()));
                 std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << "(tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
                 printqueue(ready);
@@ -190,10 +188,12 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 t += waitingtime;
                 waiting.front().movenextwait();
                 ready.push_back(Process(waiting.front()));
-                waiting.pop_front();
                 printiofinSJF(waiting,ready,t);
+                waiting.pop_front();
             } else {
+                int gap = abs(arrivaltime - t);
                 t = arrivaltime;
+                for(auto& w : waiting) w.decreasewaittime(gap);
                 ready.push_back(Process(unarrived.front()));
                 std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << "(tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
                 printqueue(ready);
@@ -201,11 +201,34 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
             }
         } else { //triple check 
             if(cputime < waitingtime && cputime < abs(arrivaltime - t)){
-
+                t+= cputime;
+                for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
+                incpu->movenextruntime();
+                incpu->decreaseburst();
+                waiting.push_back(Process(*incpu));
+                incpu->recalculateTau(alpha);
+                printcpufinSJF(incpu,t,tcs,ready);
+                incpu->setPreviousBurst(incpu->getcurrentruntime());
+                t += tcs/2;
+                delete incpu;
+                incpu = NULL;
             } else if(waitingtime < cputime && waitingtime < abs(arrivaltime - t)){
-
+                t += waitingtime;
+                incpu->decreaseruntime(waitingtime);
+                for(auto& w : waiting) w.decreasewaittime(waitingtime);
+                waiting.front().movenextwait();
+                ready.push_back(Process(waiting.front()));
+                printiofinSJF(waiting,ready,t);
+                waiting.pop_front();
             } else if(abs(arrivaltime - t) < cputime && abs(arrivaltime - t) < waitingtime){
-
+                int gap = abs(arrivaltime - t);
+                t = arrivaltime;
+                for(auto& w : waiting) w.decreasewaittime(gap);
+                incpu->decreaseruntime(gap);
+                ready.push_back(Process(unarrived.front()));
+                std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << "(tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
+                printqueue(ready);
+                unarrived.pop_front();
             } else {
                 std::cout << "bad vibes" << std::endl;
             }
