@@ -7,6 +7,7 @@
 #include <fstream>
 #include <algorithm>
 #include <list>
+#include <iomanip>
 //c includes
 #include <stdlib.h>
 #include <math.h>
@@ -65,6 +66,12 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
         unarrived.push_back(pusher);
     }
     unarrived.sort(compname);
+
+    int burstcount = 0, bursttotal = 0;
+    for(auto const& pp : p) for(int z : pp.getcputime()) {burstcount++; bursttotal += z;}
+    double cpuavg = (double)bursttotal / (double)burstcount;
+    outfile << "-- average CPU burst time: " << cpuavg << std::setprecision(3) << " ms\n";
+    std::vector<int> avgwait;
 
     for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
         if(z->getbursts() == 1)

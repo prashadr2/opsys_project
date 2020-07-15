@@ -1,1 +1,2 @@
 Algorithm FCFS
+-- average CPU burst time: 903.431 ms

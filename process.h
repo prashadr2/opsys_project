@@ -17,6 +17,7 @@ class Process{
         io_time = zio_time;
         tau = -1;
         previousBurst = -1;
+        waittime = 0;
     }
 
     Process(std::string zname, int zarrival_time, int zbursts, std::list<int> zcpu_time, std::list<int> zio_time, int ztau, int zpreviousBurst){
@@ -27,6 +28,7 @@ class Process{
         io_time = zio_time;
         tau = ztau;
         previousBurst = zpreviousBurst;
+        waittime = 0;
     }
 
     Process(const Process& p){ //shallow copies cause big worries later on
@@ -41,6 +43,7 @@ class Process{
         this->io_time = cpyio;
         this->tau = p.getTau();
         this->previousBurst = p.getPreviousBurst();
+        this->waittime = p.getwaittime();
     }
     
     std::string getname() const {return name;}
@@ -68,6 +71,9 @@ class Process{
     int getTau() const {return tau;}
     void recalculateTau(double alpha) {tau = (int)ceil((alpha * previousBurst) + ((1 - alpha) * tau));} //recalculate before print
 
+    void addwaittime(int w) {waittime += w;}
+    int getwaittime() const {return waittime;}
+
     private:
     std::string name;
     int arrival_time;
@@ -76,6 +82,7 @@ class Process{
     std::list<int> io_time; //if the last element is -2, that means no io burst time is here
     int tau;
     int previousBurst;
+    int waittime;
 };
 
 #endif
