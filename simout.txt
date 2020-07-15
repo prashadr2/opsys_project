@@ -1,5 +1,0 @@
-Algorithm FCFS
--- average CPU burst time: 903.431 ms
--- average wait time: 5.37e+04 ms
-Algorithm SJF
-Algorithm SRT

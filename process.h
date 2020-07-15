@@ -19,6 +19,8 @@ class Process{
         previousBurst = -1;
         std::vector<int> blank;
         waittime = blank;
+        remainingslice = 0;
+        beenp = false;
     }
 
     Process(std::string zname, int zarrival_time, int zbursts, std::list<int> zcpu_time, std::list<int> zio_time, int ztau, int zpreviousBurst){
@@ -31,6 +33,8 @@ class Process{
         previousBurst = zpreviousBurst;
         std::vector<int> blank;
         waittime = blank;
+        remainingslice = 0;
+        beenp = false;
     }
 
     Process(const Process& p){ //shallow copies cause big worries later on
@@ -48,6 +52,8 @@ class Process{
         std::vector<int> waitcopier;
         for(int wc : p.getwaittime()) waitcopier.push_back(wc);
         this->waittime = waitcopier;
+        this->remainingslice = p.getslice();
+        this->beenp = p.getp();
     }
     
     std::string getname() const {return name;}
@@ -65,8 +71,8 @@ class Process{
 
     std::list<int> getcputime() const {return cpu_time;}
     int getcurrentruntime() {return cpu_time.front();}
-    void movenextruntime() {cpu_time.pop_front();}
-    void decreaseruntime(int d) {*(cpu_time.begin()) -= d;}
+    void movenextruntime() {cpu_time.pop_front(); beenp = false;}
+    void decreaseruntime(int d) {*(cpu_time.begin()) -= d; remainingslice -= d;}
     
     void setPreviousBurst(int b) {previousBurst = b;}
     int getPreviousBurst() const {return previousBurst;}
@@ -78,6 +84,13 @@ class Process{
     void addwaittime(int w) {waittime.push_back(w);}
     std::vector<int> getwaittime() const {return waittime;}
 
+    void setslice(int s) {remainingslice = s;}
+    void decreaseslice(int n) {remainingslice -= n;}
+    int getslice() const {return remainingslice;}
+
+    bool getp() const {return beenp;}
+    void setp(bool ppp) {beenp = ppp;}
+
     private:
     std::string name;
     int arrival_time;
@@ -86,6 +99,8 @@ class Process{
     std::list<int> io_time; //if the last element is -2, that means no io burst time is here
     int tau;
     int previousBurst;
+    int remainingslice;
+    bool beenp;
     std::vector<int> waittime;
     // int waittime;
 };
