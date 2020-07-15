@@ -92,6 +92,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
             printqueueSJF(ready);
             if(ready.empty()) {
                 t += tcs;
+                for(auto& w: waiting) w.decreasewaittime(tcs/2);
             } else {
                 t += tcs /2;
             }
@@ -101,6 +102,12 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
         }
 
         if(incpu == NULL && !ready.empty()){
+            if(arrivaltime != -1 && arrivaltime < t){ //recently added
+                ready.push_back(Process(unarrived.front()));
+                std::cout << "time " << arrivaltime << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                printqueueSJF(ready);
+                unarrived.pop_front();
+            }
             incpu = new Process(ready.front());
             ready.pop_front();
             t += tcs / 2; 
@@ -110,9 +117,37 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 waitingtime = waiting.front().getcurrentwait();
             }
             if(ready.size() > 1) ready.sort(comptau);
-            std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
-            printqueueSJF(ready);
             cputime = incpu->getcurrentruntime();
+            if(!waiting.empty()){
+                waitingtime = waiting.front().getcurrentwait();
+                if(waitingtime <= 0) {
+                    waiting.front().movenextwait();
+                    if(waitingtime == -1){
+                        ready.push_back(Process(waiting.front()));
+                    // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
+                        ready.sort(comptau);
+                        printiofinSJF(waiting, ready, t-1);
+                        std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
+                        printqueueSJF(ready);
+                    } else {
+                        std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
+                        printqueueSJF(ready);
+                        ready.push_back(Process(waiting.front()));
+                        // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
+                        ready.sort(comptau);
+                        printiofinSJF(waiting, ready, t);
+                        
+                    }
+                    waiting.pop_front();
+                } else {
+                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
+                    printqueueSJF(ready);
+                }
+            } else {
+                std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
+                printqueueSJF(ready);
+            }
+            waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1;
         }
 #ifdef DEBUG_MODE
     std::cout << "DEBUG --> waitingtime: " << waitingtime << " arrivaltime: " << abs(arrivaltime - t) << " cputime: " << cputime << " ▼▼▼▼▼▼▼▼▼" << std::endl;

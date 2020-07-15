@@ -67,12 +67,11 @@ int main(int argc, char** argv){
         }
         psetup.push_back(Process(name,arrivaltime,burstamt,cputimes,iotimes));
     }
-    // fcfsport(outfile,psetup,tcs);
-    // fcfs(outfile, psetup, tcs);
-    // std::cout << std::endl;
+    fcfsport(outfile,psetup,tcs);
+    std::cout << std::endl;
 
-    // sjf(outfile, psetup, tcs, alpha, lambda);
-    // std::cout << std::endl;
+    sjf(outfile, psetup, tcs, alpha, lambda);
+    std::cout << std::endl;
     
     srt(outfile, psetup, tcs, alpha, lambda);
     std::cout << std::endl;
@@ -82,13 +81,13 @@ int main(int argc, char** argv){
 
 // g++ -g -D DEBUG_MODE -o a.o driver.cpp && ./a.o 8 64 0.001 4096 4 0.5 2048
 
-// Test 2     ./a.out 1 2 0.01 256 4 0.5 128
+// Test 2     ./a.o 1 2 0.01 256 4 0.5 128
 
-// Test 3     ./a.out 2 2 0.01 256 4 0.5 128
+// Test 3     ./a.o 2 2 0.01 256 4 0.5 128
 
-// Test 4     ./a.out 16 2 0.01 256 4 0.75 64
+// Test 4     ./a.o 16 2 0.01 256 4 0.75 64
 
-// Test 5     ./a.out 8 64 0.001 4096 4 0.5 2048
+// Test 5     ./a.o 8 64 0.001 4096 4 0.5 2048
 //rm -rf .git/refs/remotes/origin/
     outfile.close();
     return EXIT_SUCCESS;

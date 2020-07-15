@@ -102,6 +102,12 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
         std::cout << "startwaitingtime2: " << waitingtime << std::endl;
 #endif
         if(incpu == NULL && !ready.empty()){
+            if(arrivaltime != -1 && arrivaltime < t){
+                ready.push_back(Process(unarrived.front()));
+                std::cout << "time " << arrivaltime << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                printqueue(ready);
+                unarrived.pop_front();
+            }
             incpu = new Process(ready.front());
             ready.pop_front();
             t += tcs / 2; 
