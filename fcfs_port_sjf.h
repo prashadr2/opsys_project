@@ -67,7 +67,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
     unarrived.sort(compname);
 
     for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
-        if(z->getarrivaltime() == 1)
+        if(z->getbursts() == 1)
             std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU burst " << std::endl;
         else std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU bursts " << std::endl;
     }
@@ -77,7 +77,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
 
     while(!ready.empty() || !waiting.empty() || !unarrived.empty() || incpu != NULL){
 #ifdef DEBUG_MODE
-    if(t > 349000) break;
+    if(t > 430000) break;
 #endif
         if(waiting.size() > 1) waiting.sort(compcurwait);
 
@@ -90,11 +90,11 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
             printqueueport(ready);
             if(ready.empty()) {
                 t += tcs;
+                for(auto& w: waiting) w.decreasewaittime(tcs/2);
             } else {
                 t += tcs /2;
             }
             waiting.pop_front();
-            for(auto& w: waiting) w.decreasewaittime(tcs/2);
             continue;
         }
 
