@@ -51,11 +51,11 @@ void printiofinRR(std::list<Process>& waiting, std::list<Process>& ready, int t)
 bool preemption_ioRR(Process*& incpu, std::list<Process>& ready, std::list<Process>& waiting, int& t, int tcs, int tslice){ //call when finish IO and ready.push_back
     //ready.back() is the process to preempt...
     // if(ready.back().getTau() - (ready.back().getPreviousBurst() - ready.back().getcurrentruntime()) >= incpu->getTau() - (incpu->getPreviousBurst() - incpu->getcurrentruntime())) return false;
-    if(tslice >= incpu->getcurrentruntime()) return false;
+    if(incpu->getslice() >= incpu->getcurrentruntime()) return false;
     incpu->setp(true);
-    t += tslice;
-    for(auto& w : waiting) w.decreasewaittime(tslice);
-    incpu->decreaseruntime(tslice);
+    t += incpu->getslice();
+    for(auto& w : waiting) w.decreasewaittime(incpu->getslice());
+    incpu->decreaseruntime(incpu->getslice());
     std::cout << "time " << t << "ms: Time slice expired; process " << incpu->getname() << " preempted with " << incpu->getcurrentruntime() << "ms to go ";
     printqueueRR(ready);
     // std::cout << "time " << t << "ms: Process " << ready.back().getname() << " completed I/O; preempting " << incpu->getname() << ' ';
@@ -78,6 +78,8 @@ bool preemption_ioRR(Process*& incpu, std::list<Process>& ready, std::list<Proce
             waiting.pop_front();
         }
     }
+    // incpu->movenextruntime();
+    incpu->setslice(tslice);
     t += tcs/2;
     if(!waiting.empty() && waiting.front().getcurrentwait() == 2) {ready.push_back(*incpu); pushed = true;}
     for(auto& w : waiting) w.decreasewaittime(tcs/2);
@@ -160,14 +162,14 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
 
     while(!ready.empty() || !waiting.empty() || !unarrived.empty() || incpu != NULL){
 #ifdef DEBUG_MODE
-    if(t > 34600) break;
+    if(t > 17000) break;
 #endif
         if(waiting.size() > 1) waiting.sort(compcurwait);
 
         int waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1; //if this val is -1, wait queue is empty, if it is -2, TERMINATE THE PROCESS!!!!
         int arrivaltime = !unarrived.empty() ? unarrived.front().getarrivaltime() : -1;
         int cputime = (incpu != NULL) ? incpu->getcurrentruntime() : -1; //MAKE SURE TO FREE INCPU AND SET TO NULL AFTER WE COPY IT INTO WAITING QUEUE (waitingqueue.push_back(Process(*incpu)))
-        int remainings = (incpu != NULL) ? incpu->getslice() : -1;
+        // int remainings = (incpu != NULL) ? incpu->getslice() : -1;
 
         if(waitingtime <= -2){
             std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " terminated "; 
@@ -191,6 +193,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 unarrived.pop_front();
             }
             incpu = new Process(ready.front());
+            if(!incpu->getp()) incpu->setslice(tslice);
             ready.pop_front();
             t += tcs / 2; 
             if(waitingtime > -1){
@@ -206,12 +209,12 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                     if(waitingtime == -1){
                         // std::cout << "switch1" << std::endl;
                         ready.push_back(Process(waiting.front()));
-                        if(ready.back().getTau() > incpu->getTau()){
-                            if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
-                        } else {
-                            t-=1;
-                            if(preemption_willRR(incpu,ready,waiting,t,tcs,tslice)) {continue;}
-                        }
+                        // if(ready.back().getTau() > incpu->getTau()){
+                        //     if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
+                        // } else {
+                        //     t-=1;
+                        //     if(preemption_willRR(incpu,ready,waiting,t,tcs,tslice)) {continue;}
+                        // }
                         printiofinRR(waiting, ready, t-1);
                         std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU ";
                         if(incpu->getp()) std::cout << "with " << incpu->getcurrentruntime() << "ms burst remaining "; else std::cout << "for " << incpu->getcurrentruntime() << "ms burst ";
@@ -222,7 +225,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                         if(incpu->getp()) std::cout << "with " << incpu->getcurrentruntime() << "ms burst remaining "; else std::cout << "for " << incpu->getcurrentruntime() << "ms burst ";
                         printqueueRR(ready);
                         ready.push_back(Process(waiting.front()));
-                        if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
+                        // if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
                         printiofinRR(waiting, ready, t);
                         
                     }
@@ -244,7 +247,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
 #ifdef DEBUG_MODE
     std::cout << "DEBUG -->waitingtime: " << waitingtime << " arrivaltime: " << abs(arrivaltime - t) << " cputime: " << cputime << " ▼▼▼▼▼▼▼▼▼" << std::endl;
     std::cout << "DEBUG -->cpu_address: " << incpu << std::endl;
-    if (incpu != NULL) std::cout << "DEBUG --> incpu: " << incpu->getname() << std::endl;
+    if (incpu != NULL) std::cout << "DEBUG --> incpu: " << incpu->getname() << " || timeslice: " << incpu->getslice() << " || preempted = " << incpu->getp() << std::endl;
     std::cout << "DEBUG --> Ready: ";
     printqueueRR(ready);
     std::cout << "DEBUG --> Waiting: ";
@@ -281,7 +284,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 if(waitingtime <= 0) {
                     waiting.front().movenextwait();
                     ready.push_back(Process(waiting.front()));
-                    if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
+                    // if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
                     if(waitingtime == -1){
                         printiofinRR(waiting, ready, t-1);
                     } else {
@@ -305,7 +308,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 for(auto& w : waiting) w.decreasewaittime(waitingtime);
                 waiting.front().movenextwait();
                 ready.push_back(Process(waiting.front()));
-                if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
+                // if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
                 printiofinRR(waiting,ready,t);
                 waiting.pop_front();
                 if(!waiting.empty()){
@@ -313,7 +316,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                     if(waitingtime <= 0) {
                         waiting.front().movenextwait();
                         ready.push_back(Process(waiting.front()));
-                        if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
+                        // if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
                         if(waitingtime == -1){
                             printiofinRR(waiting, ready, t-1);
                         } else {
@@ -380,7 +383,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                     if(waitingtime <= 0) {
                         waiting.front().movenextwait();
                         ready.push_back(Process(waiting.front()));
-                        if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
+                        // if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
                         if(waitingtime == -1){
                             printiofinRR(waiting, ready, t-1);
                         } else {
@@ -424,7 +427,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                     if(waitingtime <= 0) {
                         waiting.front().movenextwait();
                         ready.push_back(Process(waiting.front()));
-                        if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
+                        // if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
                         if(waitingtime == -1){
                             printiofinRR(waiting, ready, t-1);
                         } else {
@@ -456,7 +459,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                     if(waitingtime <= 0) {
                         waiting.front().movenextwait();
                         ready.push_back(Process(waiting.front()));
-                        if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
+                        // if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
                         if(waitingtime == -1){
                             printiofinRR(waiting, ready, t-1);
                         } else {
@@ -488,7 +491,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                     if(waitingtime <= 0) {
                         waiting.front().movenextwait();
                         ready.push_back(Process(waiting.front()));
-                        if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
+                        // if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
                         if(waitingtime == -1){
                             printiofinRR(waiting, ready, t-1);
                         } else {
@@ -500,13 +503,14 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 delete incpu;
                 incpu = NULL;
             } else if(waitingtime < cputime && waitingtime < abs(arrivaltime - t)){
+                // std::cout << "trigger1" << std::endl;
                 if(incpu->getslice() < waitingtime) if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
                 t += waitingtime;
                 incpu->decreaseruntime(waitingtime);
                 for(auto& w : waiting) w.decreasewaittime(waitingtime);
                 waiting.front().movenextwait();
                 ready.push_back(Process(waiting.front()));
-                if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
+                // if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
                 printiofinRR(waiting,ready,t);
                 waiting.pop_front();
                 if(!waiting.empty()){
@@ -514,7 +518,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                     if(waitingtime <= 0) {
                         waiting.front().movenextwait();
                         ready.push_back(Process(waiting.front()));
-                        if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
+                        // if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
                         if(waitingtime == -1){
                             printiofinRR(waiting, ready, t-1);
                         } else {
@@ -537,7 +541,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                     if(waitingtime <= 0) {
                         waiting.front().movenextwait();
                         ready.push_back(Process(waiting.front()));
-                        if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
+                        // if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice)) continue;
                         if(waitingtime == -1){
                             printiofinRR(waiting, ready, t-1);
                         } else {
