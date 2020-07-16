@@ -68,7 +68,11 @@ int main(int argc, char** argv){
         psetup.push_back(Process(name,arrivaltime,burstamt,cputimes,iotimes));
     }
     fcfsport(outfile,psetup,tcs);
+<<<<<<< HEAD
     // std::cout << std::endl;
+=======
+    std::cout << std::endl;
+>>>>>>> e34f3dab6853b319b01dc2285e41a2ec9846f4b6
 
     // sjf(outfile, psetup, tcs, alpha, lambda);
     // std::cout << std::endl;
@@ -76,8 +80,12 @@ int main(int argc, char** argv){
     // srt(outfile, psetup, tcs, alpha, lambda);
     // std::cout << std::endl;
 
+<<<<<<< HEAD
     //rr(outfile, psetup, tcs, tslice, rradd);
     std::cout << std::endl;
+=======
+    // rr(outfile, psetup, tcs, tslice, rradd);
+>>>>>>> e34f3dab6853b319b01dc2285e41a2ec9846f4b6
 
 
 // g++ -g -D DEBUG_MODE -o a.o driver.cpp && ./a.o 8 64 0.001 4096 4 0.5 2048

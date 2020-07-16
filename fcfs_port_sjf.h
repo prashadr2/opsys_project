@@ -68,16 +68,17 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
     }
     unarrived.sort(compname);
 
+
     int burstcount = 0, bursttotal = 0;
     for(auto const& pp : p) for(int z : pp.getcputime()) {burstcount++; bursttotal += z;}
     double cpuavg = (double)bursttotal / (double)burstcount;
-    outfile << "-- average CPU burst time: " << cpuavg << std::setprecision(3) << " ms\n";
+    outfile << "-- average CPU burst time: " << std::setprecision(5) << cpuavg <<  " ms\n";
     std::vector<int> avgwait;
 
     for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
         if(z->getbursts() == 1)
-            std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU burst " << std::endl;
-        else std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU bursts " << std::endl;
+            std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU burst" << std::endl;
+        else std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU bursts" << std::endl;
     }
     std::cout << "time 0ms: Simulator started for FCFS ";
     printqueueport(ready);
@@ -167,6 +168,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
 #endif
         if(arrivaltime == -1 && waitingtime == -1){ //finish cpu time
             t+= cputime;
+            for(auto& r : ready) r.addwaittime(cputime);
             incpu->movenextruntime();
             incpu->decreaseburst();
             // waiting.push_back(Process(*incpu));
@@ -184,6 +186,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
             incpu = NULL;
         } else if(arrivaltime == -1 && cputime == -1){ //finish waiting
             t += waitingtime;
+            for(auto& r : ready) r.addwaittime(waitingtime);
             for(auto& w : waiting) w.decreasewaittime(waitingtime);
             waiting.front().movenextwait();
             ready.push_back(Process(waiting.front()));
@@ -191,6 +194,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
             waiting.pop_front();
         } else if(waitingtime == -1 && cputime == -1){ //we have an arrival
             t = arrivaltime;
+            for(auto& r : ready) r.addwaittime(abs(arrivaltime - t));
             ready.push_back(Process(unarrived.front()));
             std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
             printqueueport(ready);
@@ -207,6 +211,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 waiting.pop_front();
             } else {
                 t+= cputime;
+                for(auto& r : ready) r.addwaittime(cputime);
                 for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
                 incpu->movenextruntime();
                 incpu->decreaseburst();
@@ -248,6 +253,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 unarrived.pop_front();
             } else {
                 t+= cputime;
+                for(auto& r : ready) r.addwaittime(cputime);
                 incpu->movenextruntime();
                 incpu->decreaseburst();
                 // waiting.push_back(Process(*incpu));
@@ -272,6 +278,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
         } else if(cputime == -1){ //no cputime, compare arrival and waiting
             if(waitingtime < abs(arrivaltime - t)){
                 t += waitingtime;
+                for(auto& r : ready) r.addwaittime(waitingtime);
                 waiting.front().movenextwait();
                 ready.push_back(Process(waiting.front()));
                 printiofinport(waiting,ready,t);
@@ -279,6 +286,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
             } else {
                 int gap = abs(arrivaltime - t);
                 t = arrivaltime;
+                for(auto& r : ready) r.addwaittime(gap);
                 for(auto& w : waiting) w.decreasewaittime(gap);
                 ready.push_back(Process(unarrived.front()));
                 std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
@@ -288,6 +296,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
         } else { //triple check 
             if(cputime < waitingtime && cputime < abs(arrivaltime - t)){
                 t+= cputime;
+                for(auto& r : ready) r.addwaittime(cputime);
                 for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
                 incpu->movenextruntime();
                 incpu->decreaseburst();
@@ -338,9 +347,17 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
     printqueueport(ready);
 
     int waitn = 0;
+<<<<<<< HEAD
     int waitd = 0;
     for(auto& g : garbage) for(int ttg : g.getwaittime()) {waitd++; waitn += ttg; outfile << ttg << " ";}
     double waitavg = (double)waitn / (double)garbage.size();
     outfile << "-- average wait time: " << waitavg << std::setprecision(3) << " ms\n";
+=======
+    for(auto& g : garbage) {
+        for(int ttg : g.getwaittime()) waitn += ttg;
+    }
+    double waitavg = (double)waitn / (double)burstcount;
+    outfile << "-- average wait time: " << std::setprecision(5) << waitavg <<  " ms\n";
+>>>>>>> e34f3dab6853b319b01dc2285e41a2ec9846f4b6
 }
 #endif
