@@ -67,7 +67,7 @@ int main(int argc, char** argv){
         }
         psetup.push_back(Process(name,arrivaltime,burstamt,cputimes,iotimes));
     }
-    // fcfsport(outfile,psetup,tcs);
+    fcfsport(outfile,psetup,tcs);
     // std::cout << std::endl;
 
     // sjf(outfile, psetup, tcs, alpha, lambda);
@@ -76,7 +76,7 @@ int main(int argc, char** argv){
     // srt(outfile, psetup, tcs, alpha, lambda);
     // std::cout << std::endl;
 
-    rr(outfile, psetup, tcs, tslice, rradd);
+    //rr(outfile, psetup, tcs, tslice, rradd);
     std::cout << std::endl;
 
 

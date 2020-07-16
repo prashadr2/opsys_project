@@ -339,7 +339,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
 
     int waitn = 0;
     int waitd = 0;
-    for(auto& g : garbage) for(int ttg : g.getwaittime()) {waitd++; waitn += ttg;}
+    for(auto& g : garbage) for(int ttg : g.getwaittime()) {waitd++; waitn += ttg; outfile << ttg << " ";}
     double waitavg = (double)waitn / (double)garbage.size();
     outfile << "-- average wait time: " << waitavg << std::setprecision(3) << " ms\n";
 }
