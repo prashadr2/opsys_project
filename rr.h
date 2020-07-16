@@ -36,6 +36,7 @@ void printqueueRR(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE
 }
 
 void printcpufinRR(Process* incpu, int t, const int tcs, std::list<Process>& ready){
+    if (t > 999) return;
     std::cout << "time " << t << "ms: Process " << incpu->getname() << " completed a CPU burst; " << incpu->getbursts();
     if(incpu->getbursts() == 1) std::cout << " burst to go "; else std::cout << " bursts to go ";
     printqueueRR(ready);
@@ -44,6 +45,7 @@ void printcpufinRR(Process* incpu, int t, const int tcs, std::list<Process>& rea
 }
 
 void printiofinRR(std::list<Process>& waiting, std::list<Process>& ready, int t){
+    if (t > 999) return;
     std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
     printqueueRR(ready);
 }
@@ -55,8 +57,8 @@ bool preemption_ioRR(Process*& incpu, std::list<Process>& ready, std::list<Proce
         t += incpu->getslice();
         for(auto& w : waiting) w.decreasewaittime(incpu->getslice());
         incpu->decreaseruntime(incpu->getslice());
-        std::cout << "time " << t << "ms: Time slice expired; no preemption because ready queue is empty ";
-        printqueueRR(ready);
+        if (t <= 999) std::cout << "time " << t << "ms: Time slice expired; no preemption because ready queue is empty ";
+        if (t <= 999) printqueueRR(ready);
          if(!waiting.empty()){
             int waitingtime = waiting.front().getcurrentwait();
             if(waitingtime <= 0) {
@@ -76,8 +78,8 @@ bool preemption_ioRR(Process*& incpu, std::list<Process>& ready, std::list<Proce
         t += incpu->getslice();
         for(auto& w : waiting) w.decreasewaittime(incpu->getslice());
         incpu->decreaseruntime(incpu->getslice());
-        std::cout << "time " << t << "ms: Time slice expired; process " << incpu->getname() << " preempted with " << incpu->getcurrentruntime() << "ms to go ";
-        printqueueRR(ready);
+        if (t <=  999) std::cout << "time " << t << "ms: Time slice expired; process " << incpu->getname() << " preempted with " << incpu->getcurrentruntime() << "ms to go ";
+        if (t <= 999) printqueueRR(ready);
     #ifdef DEBUG_MODE
         if(!waiting.empty()) std::cout << "preempt_waittime: " << waiting.front().getcurrentwait() << std::endl;
     #endif
@@ -178,8 +180,8 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
         if(incpu == NULL && !ready.empty()){
             if(arrivaltime != -1 && arrivaltime < t){ //recently added
                 if(rradd == "END") ready.push_back(Process(unarrived.front())); else ready.push_front(Process(unarrived.front()));
-                std::cout << "time " << arrivaltime << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                printqueueRR(ready);
+                if (t <= 999) std::cout << "time " << arrivaltime << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                if (t <= 999) printqueueRR(ready);
                 unarrived.pop_front();
             }
             incpu = new Process(ready.front());
@@ -199,27 +201,28 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                     if(waitingtime == -1){
                         if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
                         printiofinRR(waiting, ready, t-1);
-                        std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU ";
-                        if(incpu->getp()) std::cout << "with " << incpu->getcurrentruntime() << "ms burst remaining "; else std::cout << "for " << incpu->getcurrentruntime() << "ms burst ";
-                        printqueueRR(ready);
+                        if (t <= 999) std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU ";
+                        if (t <= 999) {if(incpu->getp()) std::cout << "with " << incpu->getcurrentruntime() << "ms burst remaining "; else std::cout << "for " << incpu->getcurrentruntime() << "ms burst ";}
+                        if (t <= 999) printqueueRR(ready);
                     } else {
-                        std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU ";
-                        if(incpu->getp()) std::cout << "with " << incpu->getcurrentruntime() << "ms burst remaining "; else std::cout << "for " << incpu->getcurrentruntime() << "ms burst ";
-                        printqueueRR(ready);
+                        if (t <= 999) std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU ";
+                        if (t <= 999) {if(incpu->getp()) std::cout << "with " << incpu->getcurrentruntime() << "ms burst remaining "; else std::cout << "for " << incpu->getcurrentruntime() << "ms burst ";}
+                        if (t <= 999) printqueueRR(ready);
                         if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
                         printiofinRR(waiting, ready, t);
                         
                     }
                     waiting.pop_front();
                 } else {
-                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU ";
-                    if(incpu->getp()) std::cout << "with " << incpu->getcurrentruntime() << "ms burst remaining "; else std::cout << "for " << incpu->getcurrentruntime() << "ms burst ";
-                    printqueueRR(ready);
+                    if (t <= 999) std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU ";
+                    if (t <= 999) {if(incpu->getp()) std::cout << "with " << incpu->getcurrentruntime() << "ms burst remaining "; else std::cout << "for " << incpu->getcurrentruntime() << "ms burst ";}
+                    if (t <= 999) printqueueRR(ready);
                 }
+
             } else {
-                std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU ";
-                if(incpu->getp()) std::cout << "with " << incpu->getcurrentruntime() << "ms burst remaining "; else std::cout << "for " << incpu->getcurrentruntime() << "ms burst ";
-                printqueueRR(ready);
+                if (t <= 999) std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU ";
+                if (t <= 999) {if(incpu->getp()) std::cout << "with " << incpu->getcurrentruntime() << "ms burst remaining "; else std::cout << "for " << incpu->getcurrentruntime() << "ms burst ";}
+                if (t <= 999) printqueueRR(ready);
             }
             waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1;
         }
@@ -274,8 +277,8 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
         } else if(waitingtime == -1 && cputime == -1){ //we have an arrival
             t = arrivaltime;
             if(rradd == "END") ready.push_back(Process(unarrived.front())); else ready.push_front(Process(unarrived.front()));
-            std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-            printqueueRR(ready);
+            if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+            if (t <= 999) printqueueRR(ready);
             unarrived.pop_front();
         } else if(arrivaltime == -1){ //no arrival, compare waiting/cpu
             if(waitingtime < cputime){
@@ -377,8 +380,8 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 incpu->decreaseruntime(gap);
                 if(rradd == "END") ready.push_back(Process(unarrived.front())); else ready.push_front(Process(unarrived.front()));;
 
-                std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                printqueueRR(ready);
+                if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                if (t <= 999) printqueueRR(ready);
                 unarrived.pop_front();
             } else {
                 if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)) continue;
@@ -424,8 +427,8 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 t = arrivaltime;
                 for(auto& w : waiting) w.decreasewaittime(gap);
                 if(rradd == "END") ready.push_back(Process(unarrived.front())); else ready.push_front(Process(unarrived.front()));;
-                std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                printqueueRR(ready);
+                if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                if (t <= 999) printqueueRR(ready);
                 unarrived.pop_front();
                 if(!waiting.empty()){
                     waitingtime = waiting.front().getcurrentwait();
@@ -501,8 +504,8 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 for(auto& w : waiting) w.decreasewaittime(gap);
                 incpu->decreaseruntime(gap);
                 if(rradd == "END") ready.push_back(Process(unarrived.front())); else ready.push_front(Process(unarrived.front()));;
-                std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                printqueueRR(ready);
+                if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                if (t <= 999) printqueueRR(ready);
                 unarrived.pop_front();
                 if(!waiting.empty()){
                     waitingtime = waiting.front().getcurrentwait();

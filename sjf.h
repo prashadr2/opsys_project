@@ -21,6 +21,12 @@ void printqueueSJF(std::list<Process>& printer);
 void printiofin(std::list<Process>& waiting, std::list<Process>& ready, int t);
 
 void printiofin(std::list<Process>& waiting, std::list<Process>& ready, int t){
+    if (t > 999) {
+        waiting.front().movenextwait();
+        ready.push_back(Process(waiting.front()));
+        waiting.pop_front();
+        return;
+    }
     std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
     waiting.front().movenextwait();
     ready.push_back(Process(waiting.front()));
@@ -44,6 +50,7 @@ void printqueueSJF(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLIN
 }
 
 void printcpufinSJF(Process* incpu, int t, const int tcs, std::list<Process>& ready, const double alpha){
+    if (t > 999) {incpu->recalculateTau(alpha); return; }
     std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) completed a CPU burst; " << incpu->getbursts();
     if(incpu->getbursts() == 1) std::cout << " burst to go "; else std::cout << " bursts to go ";
     printqueueSJF(ready);
@@ -55,6 +62,7 @@ void printcpufinSJF(Process* incpu, int t, const int tcs, std::list<Process>& re
 }
 
 void printiofinSJF(std::list<Process>& waiting, std::list<Process>& ready, int t){
+  if (t > 999) return;
     std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " (tau " << waiting.front().getTau() << "ms) completed I/O; added to ready queue ";
     printqueueSJF(ready);
 }
@@ -123,8 +131,8 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
         if(incpu == NULL && !ready.empty()){
             if(arrivaltime != -1 && arrivaltime < t){ //recently added
                 ready.push_back(Process(unarrived.front()));
-                std::cout << "time " << arrivaltime << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                printqueueSJF(ready);
+                if (t <= 999) std::cout << "time " << arrivaltime << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                if (t <= 999) printqueueSJF(ready);
                 unarrived.pop_front();
             }
             incpu = new Process(ready.front());
@@ -147,11 +155,11 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                     // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
                         ready.sort(comptau);
                         printiofinSJF(waiting, ready, t-1);
-                        std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
-                        printqueueSJF(ready);
+                        if (t <= 999) std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
+                        if (t <= 999) printqueueSJF(ready);
                     } else {
-                        std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
-                        printqueueSJF(ready);
+                        if (t <= 999) std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
+                        if (t <= 999) printqueueSJF(ready);
                         ready.push_back(Process(waiting.front()));
                         // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
                         ready.sort(comptau);
@@ -160,12 +168,12 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                     }
                     waiting.pop_front();
                 } else {
-                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
-                    printqueueSJF(ready);
+                    if (t <=999) std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
+                    if (t <= 999) printqueueSJF(ready);
                 }
             } else {
-                std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
-                printqueueSJF(ready);
+                if (t <= 999) std::cout << "time " << t << "ms: Process " << incpu->getname() << " (tau " << incpu->getTau() << "ms) started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
+                if (t <= 999) printqueueSJF(ready);
             }
             waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1;
         }
@@ -213,8 +221,8 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
             t = arrivaltime;
             ready.push_back(Process(unarrived.front()));
             if(ready.size() > 1) ready.sort(comptau);
-            std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " (tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
-            printqueueSJF(ready);
+            if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " (tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
+            if (t <= 999) printqueueSJF(ready);
             unarrived.pop_front();
         } else if(arrivaltime == -1){ //no arrival, compare waiting/cpu
             if(waitingtime < cputime){
@@ -269,8 +277,8 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 incpu->decreaseruntime(gap);
                 ready.push_back(Process(unarrived.front()));
                 if(ready.size() > 1) ready.sort(comptau);
-                std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " (tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
-                printqueueSJF(ready);
+                if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " (tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
+                if (t <= 999) printqueueSJF(ready);
                 unarrived.pop_front();
             } else {
                 t+= cputime;
@@ -311,8 +319,8 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 for(auto& w : waiting) w.decreasewaittime(gap);
                 ready.push_back(Process(unarrived.front()));
                 if(ready.size() > 1) ready.sort(comptau);
-                std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " (tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
-                printqueueSJF(ready);
+                if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " (tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
+                if (t <= 999) printqueueSJF(ready);
                 unarrived.pop_front();
             }
         } else { //triple check 
@@ -357,8 +365,8 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 incpu->decreaseruntime(gap);
                 ready.push_back(Process(unarrived.front()));
                 if(ready.size() > 1) ready.sort(comptau);
-                std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " (tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
-                printqueueSJF(ready);
+                if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " (tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
+                if (t <= 999) printqueueSJF(ready);
                 unarrived.pop_front();
             } else {
                 std::cout << "bad vibes" << std::endl;

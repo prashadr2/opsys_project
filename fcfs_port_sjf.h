@@ -37,6 +37,7 @@ void printqueueport(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLI
 }
 
 void printcpufinport(Process* incpu, int t, const int tcs, std::list<Process>& ready){
+    if (t > 999) return;
     std::cout << "time " << t << "ms: Process " << incpu->getname() << " completed a CPU burst; " << incpu->getbursts();
     if(incpu->getbursts() == 1) std::cout << " burst to go "; else std::cout << " bursts to go ";
     printqueueport(ready);
@@ -45,6 +46,7 @@ void printcpufinport(Process* incpu, int t, const int tcs, std::list<Process>& r
 }
 
 void printiofinport(std::list<Process>& waiting, std::list<Process>& ready, int t){
+    if (t > 999) return;
     std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
     printqueueport(ready);
 }
@@ -112,8 +114,8 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
        if(incpu == NULL && !ready.empty()){
             if(arrivaltime != -1 && arrivaltime < t){ //recently added
                 ready.push_back(Process(unarrived.front()));
-                std::cout << "time " << arrivaltime << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                printqueueport(ready);
+                if (t <= 999) std::cout << "time " << arrivaltime << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                if (t <= 999) printqueueport(ready);
                 unarrived.pop_front();
             }
             incpu = new Process(ready.front());
@@ -136,11 +138,11 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                     // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
                         // ready.sort(comptau);
                         printiofinport(waiting, ready, t-1);
-                        std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
-                        printqueueport(ready);
+                        if (t <= 999) std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
+                        if (t <= 999) printqueueport(ready);
                     } else {
-                        std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
-                        printqueueport(ready);
+                        if (t <= 999) std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
+                        if (t <= 999) printqueueport(ready);
                         ready.push_back(Process(waiting.front()));
                         // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,comptau)) continue;
                         // ready.sort(comptau);
@@ -149,12 +151,12 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                     }
                     waiting.pop_front();
                 } else {
-                    std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
-                    printqueueport(ready);
+                    if (t <= 999) std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
+                    if (t <= 999) printqueueport(ready);
                 }
             } else {
-                std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
-                printqueueport(ready);
+                if (t <= 999) std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
+                if (t <= 999) printqueueport(ready);
             }
             waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1;
         }
@@ -200,8 +202,8 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
             t = arrivaltime;
             // for(auto& r : ready) r.addwaittime(abs(arrivaltime - t)); //THIS IS WRONGGGGGGGGGGGGG at this time arrivaltime - t = 0
             ready.push_back(Process(unarrived.front()));
-            std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-            printqueueport(ready);
+            if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+            if (t <= 999) printqueueport(ready);
             unarrived.pop_front();
         } else if(arrivaltime == -1){ //no arrival, compare waiting/cpu
             if(waitingtime < cputime){
@@ -253,8 +255,8 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 incpu->decreaseruntime(gap);
                 for(auto& r : ready) r.addwaittime(gap);
                 ready.push_back(Process(unarrived.front()));
-                std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                printqueueport(ready);
+                if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                if (t <= 999) printqueueport(ready);
                 unarrived.pop_front();
             } else {
                 t+= cputime;
@@ -295,8 +297,8 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 for(auto& r : ready) r.addwaittime(gap);
                 for(auto& w : waiting) w.decreasewaittime(gap);
                 ready.push_back(Process(unarrived.front()));
-                std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                printqueueport(ready);
+                if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                if (t <= 999) printqueueport(ready);
                 unarrived.pop_front();
             }
         } else { //triple check 
@@ -341,8 +343,8 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 incpu->decreaseruntime(gap);
                 for(auto& r : ready) r.addwaittime(gap);
                 ready.push_back(Process(unarrived.front()));
-                std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                printqueueport(ready);
+                if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                if (t <= 999) printqueueport(ready);
                 unarrived.pop_front();
             } else {
                 std::cout << "bad vibes" << std::endl;
