@@ -7,6 +7,7 @@
 #include <fstream>
 #include <algorithm>
 #include <list>
+#include <iomanip>
 //c includes
 #include <stdlib.h>
 #include <math.h>
@@ -126,6 +127,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
     std::list<Process> unarrived;
     std::list<Process> ready; //first positon in ready queue IS THE PROCESS CURRENTLY IN THE CPU
     std::list<Process> waiting;
+    std::vector<Process> garbage;
     Process* incpu = NULL; //needs to be a pointer so we can dynammically call the process deep copy constructor
     auto compname = [](Process p1, Process p2) -> bool {return p1.getname() < p2.getname();};
     auto comparrival = [](Process p1, Process p2) -> bool {if(p1.getarrivaltime() == p2.getarrivaltime()) return p1.getname() < p2.getname(); else return p1.getarrivaltime() < p2.getarrivaltime();};
@@ -135,6 +137,11 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
         unarrived.push_back(pusher);
     }
     unarrived.sort(compname);
+
+     int burstcount = 0, bursttotal = 0;
+    for(auto const& pp : p) for(int z : pp.getcputime()) {burstcount++; bursttotal += z;}
+    double cpuavg = (double)bursttotal / (double)burstcount;
+    outfile << "-- average CPU burst time: " << std::setprecision(3) << std::fixed << cpuavg <<  " ms\n";
 
     for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
         std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU burst";
@@ -163,6 +170,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
             } else {
                 t += tcs /2;
             }
+            garbage.push_back(Process(waiting.front()));
             waiting.pop_front();
             continue;
         }
@@ -517,6 +525,16 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
     t -= tcs/2;
     std::cout << "time " << t << "ms: Simulator ended for RR ";
     printqueueRR(ready);
+
+    int waitn = 0;
+    for(auto& g : garbage) {
+        for(int ttg : g.getwaittime()) waitn += ttg;
+    }
+    double waitavg = (double)waitn / (double)burstcount;
+    outfile << "-- average wait time: " << std::setprecision(3) << std::fixed << waitavg <<  " ms\n";
+    outfile << "-- average turnaround time: " << std::setprecision(3) << std::fixed << (double)(burstcount*4 + bursttotal + waitn) / (double) burstcount << " ms\n";
+    outfile << "-- total number of context switches: " << burstcount << '\n';
+    outfile << "-- total number of preemptions: 0\n";
 }
 
 

@@ -72,7 +72,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
     int burstcount = 0, bursttotal = 0;
     for(auto const& pp : p) for(int z : pp.getcputime()) {burstcount++; bursttotal += z;}
     double cpuavg = (double)bursttotal / (double)burstcount;
-    outfile << "-- average CPU burst time: " << std::setprecision(5) << cpuavg <<  " ms\n";
+    outfile << "-- average CPU burst time: " << std::setprecision(3) << std::fixed << cpuavg <<  " ms\n";
     std::vector<int> avgwait;
 
     for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
@@ -102,6 +102,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 for(auto& w: waiting) w.decreasewaittime(tcs/2);
             } else {
                 t += tcs /2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
             }
             garbage.push_back(Process(waiting.front()));
             waiting.pop_front();
@@ -117,6 +118,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
             }
             incpu = new Process(ready.front());
             ready.pop_front();
+            for(auto& r : ready) r.addwaittime(tcs/2);
             t += tcs / 2; 
             if(waitingtime > -1){
                 for(auto& w: waiting) w.decreasewaittime(tcs/2);
@@ -182,6 +184,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
             printcpufinport(incpu,t,tcs,ready);
             waiting.push_back(Process(*incpu));
             t += tcs/2;
+            for(auto& r : ready) r.addwaittime(tcs/2);
             delete incpu;
             incpu = NULL;
         } else if(arrivaltime == -1 && cputime == -1){ //finish waiting
@@ -193,8 +196,9 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
             printiofinport(waiting,ready,t);
             waiting.pop_front();
         } else if(waitingtime == -1 && cputime == -1){ //we have an arrival
-            t = arrivaltime;
             for(auto& r : ready) r.addwaittime(abs(arrivaltime - t));
+            t = arrivaltime;
+            // for(auto& r : ready) r.addwaittime(abs(arrivaltime - t)); //THIS IS WRONGGGGGGGGGGGGG at this time arrivaltime - t = 0
             ready.push_back(Process(unarrived.front()));
             std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
             printqueueport(ready);
@@ -226,6 +230,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 printcpufinport(incpu,t,tcs,ready);
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
                 waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0) {
                     waiting.front().movenextwait();
@@ -267,6 +272,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 printcpufinport(incpu,t,tcs,ready);
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
                 waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0){
                     printiofinport(waiting, ready, t);
@@ -311,6 +317,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 printcpufinport(incpu,t,tcs,ready);
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
                 waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0){
                     printiofinport(waiting, ready, t);
@@ -351,6 +358,9 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
         for(int ttg : g.getwaittime()) waitn += ttg;
     }
     double waitavg = (double)waitn / (double)burstcount;
-    outfile << "-- average wait time: " << std::setprecision(5) << waitavg <<  " ms\n";
+    outfile << "-- average wait time: " << std::setprecision(3) << std::fixed << waitavg <<  " ms\n";
+    outfile << "-- average turnaround time: " << std::setprecision(3) << std::fixed << (double)(burstcount*4 + bursttotal + waitn) / (double) burstcount << " ms\n";
+    outfile << "-- total number of context switches: " << burstcount << '\n';
+    outfile << "-- total number of preemptions: 0\n";
 }
 #endif

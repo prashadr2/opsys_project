@@ -7,6 +7,7 @@
 #include <fstream>
 #include <algorithm>
 #include <list>
+#include <iomanip>
 //c includes
 #include <stdlib.h>
 #include <math.h>
@@ -55,6 +56,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
     std::list<Process> unarrived;
     std::list<Process> ready; //first positon in ready queue IS THE PROCESS CURRENTLY IN THE CPU
     std::list<Process> waiting;
+    std::vector<Process> garbage;
     Process* incpu = NULL; //needs to be a pointer so we can dynammically call the process deep copy constructor
     auto compname = [](Process p1, Process p2) -> bool {return p1.getname() < p2.getname();};
     auto comparrival = [](Process p1, Process p2) -> bool {if(p1.getarrivaltime() == p2.getarrivaltime()) return p1.getname() < p2.getname(); else return p1.getarrivaltime() < p2.getarrivaltime();};
@@ -67,6 +69,11 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
         unarrived.push_back(pusher);
     }
     unarrived.sort(compname);
+
+    int burstcount = 0, bursttotal = 0;
+    for(auto const& pp : p) for(int z : pp.getcputime()) {burstcount++; bursttotal += z;}
+    double cpuavg = (double)bursttotal / (double)burstcount;
+    outfile << "-- average CPU burst time: " << std::setprecision(3) << std::fixed << cpuavg <<  " ms\n";
 
     for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
         std::cout << "Process " << z->getname() << " [NEW] (arrival time " << z->getarrivaltime() << " ms) " << z->getbursts() << " CPU burst";
@@ -95,7 +102,9 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 for(auto& w: waiting) w.decreasewaittime(tcs/2);
             } else {
                 t += tcs /2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
             }
+            garbage.push_back(Process(waiting.front()));
             waiting.pop_front();
             // for(auto& w: waiting) w.decreasewaittime(tcs/2);
             continue;
@@ -111,6 +120,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
             incpu = new Process(ready.front());
             ready.pop_front();
             t += tcs / 2; 
+            for(auto& r : ready) r.addwaittime(tcs/2);
             if(waitingtime > -1){
                 for(auto& w: waiting) w.decreasewaittime(tcs/2);
                 if(waiting.size() > 1) waiting.sort(compcurwait);
@@ -161,6 +171,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
 #endif
         if(arrivaltime == -1 && waitingtime == -1){ //finish cpu time
             t+= cputime;
+            for(auto& r : ready) r.addwaittime(cputime);
             incpu->movenextruntime();
             incpu->decreaseburst();
             // waiting.push_back(Process(*incpu));
@@ -175,10 +186,12 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
             incpu->setPreviousBurst(incpu->getcurrentruntime());
             waiting.push_back(Process(*incpu));
             t += tcs/2;
+            for(auto& r : ready) r.addwaittime(tcs/2);
             delete incpu;
             incpu = NULL;
         } else if(arrivaltime == -1 && cputime == -1){ //finish waiting
             t += waitingtime;
+            for(auto& r : ready) r.addwaittime(waitingtime);
             for(auto& w : waiting) w.decreasewaittime(waitingtime);
             waiting.front().movenextwait();
             ready.push_back(Process(waiting.front()));
@@ -186,6 +199,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
             printiofinSJF(waiting,ready,t);
             waiting.pop_front();
         } else if(waitingtime == -1 && cputime == -1){ //we have an arrival
+            for(auto& r : ready) r.addwaittime(abs(arrivaltime - t));
             t = arrivaltime;
             ready.push_back(Process(unarrived.front()));
             if(ready.size() > 1) ready.sort(comptau);
@@ -195,6 +209,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
         } else if(arrivaltime == -1){ //no arrival, compare waiting/cpu
             if(waitingtime < cputime){
                 t += waitingtime;
+                for(auto& r : ready) r.addwaittime(waitingtime);
                 incpu->decreaseruntime(waitingtime);
                 for(auto& w : waiting) w.decreasewaittime(waitingtime);
                 waiting.front().movenextwait();
@@ -204,6 +219,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 waiting.pop_front();
             } else {
                 t+= cputime;
+                for(auto& r : ready) r.addwaittime(cputime);
                 for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
                 incpu->movenextruntime();
                 incpu->decreaseburst();
@@ -219,6 +235,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 incpu->setPreviousBurst(incpu->getcurrentruntime());
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
                 waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0) {
                     waiting.front().movenextwait();
@@ -238,6 +255,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
             if(abs(arrivaltime - t) < cputime){
                 int gap = abs(arrivaltime - t);
                 t = arrivaltime;
+                for(auto& r : ready) r.addwaittime(gap);
                 incpu->decreaseruntime(gap);
                 ready.push_back(Process(unarrived.front()));
                 if(ready.size() > 1) ready.sort(comptau);
@@ -246,6 +264,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 unarrived.pop_front();
             } else {
                 t+= cputime;
+                for(auto& r : ready) r.addwaittime(cputime);
                 incpu->movenextruntime();
                 incpu->decreaseburst();
                 // waiting.push_back(Process(*incpu));
@@ -260,6 +279,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 incpu->setPreviousBurst(incpu->getcurrentruntime());
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
                 waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0) printiofin(waiting, ready, t);
                 delete incpu;
@@ -268,6 +288,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
         } else if(cputime == -1){ //no cputime, compare arrival and waiting
             if(waitingtime < abs(arrivaltime - t)){
                 t += waitingtime;
+                for(auto& r : ready) r.addwaittime(waitingtime);
                 waiting.front().movenextwait();
                 ready.push_back(Process(waiting.front()));
                 if(ready.size() > 1) ready.sort(comptau);
@@ -276,6 +297,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
             } else {
                 int gap = abs(arrivaltime - t);
                 t = arrivaltime;
+                for(auto& r : ready) r.addwaittime(gap);
                 for(auto& w : waiting) w.decreasewaittime(gap);
                 ready.push_back(Process(unarrived.front()));
                 if(ready.size() > 1) ready.sort(comptau);
@@ -286,6 +308,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
         } else { //triple check 
             if(cputime < waitingtime && cputime < abs(arrivaltime - t)){
                 t+= cputime;
+                for(auto& r : ready) r.addwaittime(cputime);
                 for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
                 incpu->movenextruntime();
                 incpu->decreaseburst();
@@ -301,12 +324,14 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 incpu->setPreviousBurst(incpu->getcurrentruntime());
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
                 waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0) printiofin(waiting, ready, t);
                 delete incpu;
                 incpu = NULL;
             } else if(waitingtime < cputime && waitingtime < abs(arrivaltime - t)){
                 t += waitingtime;
+                for(auto& r : ready) r.addwaittime(waitingtime);
                 incpu->decreaseruntime(waitingtime);
                 for(auto& w : waiting) w.decreasewaittime(waitingtime);
                 waiting.front().movenextwait();
@@ -317,6 +342,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
             } else if(abs(arrivaltime - t) < cputime && abs(arrivaltime - t) < waitingtime){
                 int gap = abs(arrivaltime - t);
                 t = arrivaltime;
+                for(auto& r : ready) r.addwaittime(gap);
                 for(auto& w : waiting) w.decreasewaittime(gap);
                 incpu->decreaseruntime(gap);
                 ready.push_back(Process(unarrived.front()));
@@ -332,6 +358,16 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
     t -= tcs/2;
     std::cout << "time " << t << "ms: Simulator ended for SJF ";
     printqueueSJF(ready);
+
+    int waitn = 0;
+    for(auto& g : garbage) {
+        for(int ttg : g.getwaittime()) waitn += ttg;
+    }
+    double waitavg = (double)waitn / (double)burstcount;
+    outfile << "-- average wait time: " << std::setprecision(3) << std::fixed << waitavg <<  " ms\n";
+    outfile << "-- average turnaround time: " << std::setprecision(3) << std::fixed << (double)(burstcount*4 + bursttotal + waitn) / (double) burstcount << " ms\n";
+    outfile << "-- total number of context switches: " << burstcount << '\n';
+    outfile << "-- total number of preemptions: 0\n";
 }
 
 

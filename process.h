@@ -81,13 +81,7 @@ class Process{
     int getTau() const {return tau;}
     void recalculateTau(double alpha) {tau = (int)ceil((alpha * previousBurst) + ((1 - alpha) * tau));} //recalculate before print
 
-    void addwaittime(int w) {
-        waittime.push_back(w); 
-        // std::cout << w << " <";
-        // int tt = 0;
-        // for(int z : waittime) {std::cout << ' ' << z; tt+=z;}
-        // std::cout << " > time: " << tt << std::endl;
-        }
+    void addwaittime(int w) {waittime.push_back(w);}
     std::vector<int> getwaittime() const {return waittime;}
 
     void setslice(int s) {remainingslice = s;}

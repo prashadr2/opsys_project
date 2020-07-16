@@ -32,6 +32,7 @@ double nextrandnum(double lambda, int upperbound){
 
 int main(int argc, char** argv){
     setvbuf( stdout, NULL, _IONBF, 0 );
+    // pclose(stdout);
     if(argc < 8){
         std::cerr << "ERROR: Correct Usage --> ./a.o [n] [seed] [lambda] [upper_bound] [t_cs] [alpha] [t_slice] [rr_add (OPTIONAL)]" << std::endl;
         return EXIT_FAILURE;
@@ -70,13 +71,13 @@ int main(int argc, char** argv){
     fcfsport(outfile,psetup,tcs);
     std::cout << std::endl;
 
-    // sjf(outfile, psetup, tcs, alpha, lambda);
-    // std::cout << std::endl;
+    sjf(outfile, psetup, tcs, alpha, lambda);
+    std::cout << std::endl;
     
-    // srt(outfile, psetup, tcs, alpha, lambda);
-    // std::cout << std::endl;
+    srt(outfile, psetup, tcs, alpha, lambda);
+    std::cout << std::endl;
 
-    // rr(outfile, psetup, tcs, tslice, rradd);
+    rr(outfile, psetup, tcs, tslice, rradd);
 
 
 // g++ -g -D DEBUG_MODE -o a.o driver.cpp && ./a.o 8 64 0.001 4096 4 0.5 2048
