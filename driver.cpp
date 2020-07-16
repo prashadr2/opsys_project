@@ -13,7 +13,6 @@ Emily Martsolf - martse
 //c includes
 #include <math.h>
 //custom includes
-#include "fcfs.h"
 #include "sjf.h"
 #include "srt.h"
 #include "rr.h"

@@ -18,6 +18,16 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
 void printcpufinSJF(Process* incpu, int t, const int tcs, std::list<Process>& ready);
 void printiofinSJF(std::list<Process>& waiting, std::list<Process>& ready, int t);
 void printqueueSJF(std::list<Process>& printer);
+void printiofin(std::list<Process>& waiting, std::list<Process>& ready, int t);
+
+void printiofin(std::list<Process>& waiting, std::list<Process>& ready, int t){
+    std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
+    waiting.front().movenextwait();
+    ready.push_back(Process(waiting.front()));
+    waiting.pop_front();
+    printqueueSJF(ready);
+}
+
 void printqueueSJF(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE CHAR!!!
   std::cout << "[Q";
   if(printer.size() == 0){
