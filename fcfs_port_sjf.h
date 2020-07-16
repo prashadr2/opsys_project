@@ -354,24 +354,13 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
     printqueueport(ready);
 
     int waitn = 0;
-<<<<<<< HEAD
-    int waitd = 0;
-    for(auto& g : garbage) for(int ttg : g.getwaittime()) {waitd++; waitn += ttg; outfile << ttg << " ";}
-    double waitavg = (double)waitn / (double)garbage.size();
-    outfile << "-- average wait time: " << waitavg << std::setprecision(3) << " ms\n";
-=======
     for(auto& g : garbage) {
         for(int ttg : g.getwaittime()) waitn += ttg;
     }
     double waitavg = (double)waitn / (double)burstcount;
-<<<<<<< HEAD
     outfile << "-- average wait time: " << std::setprecision(3) << std::fixed << waitavg <<  " ms\n";
     outfile << "-- average turnaround time: " << std::setprecision(3) << std::fixed << (double)(burstcount*4 + bursttotal + waitn) / (double) burstcount << " ms\n";
     outfile << "-- total number of context switches: " << burstcount << '\n';
     outfile << "-- total number of preemptions: 0\n";
-=======
-    outfile << "-- average wait time: " << std::setprecision(5) << waitavg <<  " ms\n";
->>>>>>> e34f3dab6853b319b01dc2285e41a2ec9846f4b6
->>>>>>> de2b685a750654b2ba54e940f19aac46166ba26b
 }
 #endif
