@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Process A [NEW] (arrival time 102 ms) 85 CPU bursts
 Process B [NEW] (arrival time 365 ms) 6 CPU bursts
 Process C [NEW] (arrival time 246 ms) 95 CPU bursts
@@ -6,6 +7,12 @@ Process E [NEW] (arrival time 1515 ms) 83 CPU bursts
 Process F [NEW] (arrival time 1684 ms) 97 CPU bursts
 Process G [NEW] (arrival time 669 ms) 1 CPU burst
 Process H [NEW] (arrival time 376 ms) 49 CPU bursts
+=======
+<<<<<<< HEAD
+=======
+Process A [NEW] (arrival time 9 ms) 16 CPU bursts
+Process B [NEW] (arrival time 18 ms) 21 CPU bursts
+>>>>>>> de2b685a750654b2ba54e940f19aac46166ba26b
 time 0ms: Simulator started for FCFS [Q <empty>]
 time 102ms: Process A arrived; added to ready queue [Q A]
 time 104ms: Process A started using the CPU for 1031ms burst [Q <empty>]
@@ -33002,6 +33009,7 @@ time 478691ms: Process F (tau 393ms) started using the CPU with 1146ms burst rem
 time 479837ms: Process F terminated [Q <empty>]
 time 479839ms: Simulator ended for SRT [Q <empty>]
 
+<<<<<<< HEAD
 Process A [NEW] (arrival time 102 ms) 85 CPU bursts
 Process B [NEW] (arrival time 365 ms) 6 CPU bursts
 Process C [NEW] (arrival time 246 ms) 95 CPU bursts
@@ -35006,3 +35014,6 @@ time 440541ms: Process F completed I/O; added to ready queue [Q F]
 time 440543ms: Process F started using the CPU for 1146ms burst [Q <empty>]
 time 441689ms: Process F terminated [Q <empty>]
 time 441691ms: Simulator ended for RR [Q <empty>]
+=======
+>>>>>>> e34f3dab6853b319b01dc2285e41a2ec9846f4b6
+>>>>>>> de2b685a750654b2ba54e940f19aac46166ba26b
