@@ -55,6 +55,7 @@ bool preemption_ioRR(Process*& incpu, std::list<Process>& ready, std::list<Proce
     if(incpu->getslice() >= incpu->getcurrentruntime()) return false;
     if(ready.empty()) {
         t += incpu->getslice();
+        for(auto& r : ready) r.addwaittime(incpu->getslice());
         for(auto& w : waiting) w.decreasewaittime(incpu->getslice());
         incpu->decreaseruntime(incpu->getslice());
         if (t <= 999) std::cout << "time " << t << "ms: Time slice expired; no preemption because ready queue is empty ";
@@ -76,6 +77,7 @@ bool preemption_ioRR(Process*& incpu, std::list<Process>& ready, std::list<Proce
     } else {
         incpu->setp(true);
         t += incpu->getslice();
+        for(auto& r : ready) r.addwaittime(incpu->getslice());
         for(auto& w : waiting) w.decreasewaittime(incpu->getslice());
         incpu->decreaseruntime(incpu->getslice());
         if (t <=  999) std::cout << "time " << t << "ms: Time slice expired; process " << incpu->getname() << " preempted with " << incpu->getcurrentruntime() << "ms to go ";
@@ -100,6 +102,7 @@ bool preemption_ioRR(Process*& incpu, std::list<Process>& ready, std::list<Proce
         // incpu->movenextruntime();
         incpu->setslice(tslice);
         t += tcs/2;
+        for(auto& r : ready) r.addwaittime(tcs/2);
         if(!waiting.empty() && waiting.front().getcurrentwait() == 2) {ready.push_back(*incpu); pushed = true;}
         for(auto& w : waiting) w.decreasewaittime(tcs/2);
         if(!waiting.empty()){
@@ -140,7 +143,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
     }
     unarrived.sort(compname);
 
-     int burstcount = 0, bursttotal = 0;
+     int burstcount = 0, bursttotal = 0, preemptions = 0;
     for(auto const& pp : p) for(int z : pp.getcputime()) {burstcount++; bursttotal += z;}
     double cpuavg = (double)bursttotal / (double)burstcount;
     outfile << "-- average CPU burst time: " << std::setprecision(3) << std::fixed << cpuavg <<  " ms\n";
@@ -171,6 +174,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 for(auto& w: waiting) w.decreasewaittime(tcs/2);
             } else {
                 t += tcs /2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
             }
             garbage.push_back(Process(waiting.front()));
             waiting.pop_front();
@@ -188,6 +192,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
             if(!incpu->getp()) incpu->setslice(tslice);
             ready.pop_front();
             t += tcs / 2; 
+            for(auto& r : ready) r.addwaittime(tcs/2);
             if(waitingtime > -1){
                 for(auto& w: waiting) w.decreasewaittime(tcs/2);
                 if(waiting.size() > 1) waiting.sort(compcurwait);
@@ -238,8 +243,9 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
     printqueueRR(unarrived);
 #endif
         if(arrivaltime == -1 && waitingtime == -1){ //finish cpu time
-            if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)) continue;
+            if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)){preemptions++; continue;}
             t+= cputime;
+            for(auto& r : ready) r.addwaittime(cputime);
             incpu->movenextruntime();
             incpu->setslice(tslice);
             incpu->decreaseburst();
@@ -252,10 +258,12 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
             printcpufinRR(incpu,t,tcs,ready);
             waiting.push_back(Process(*incpu));
             t += tcs/2;
+            for(auto& r : ready) r.addwaittime(tcs/2);
             delete incpu;
             incpu = NULL;
         } else if(arrivaltime == -1 && cputime == -1){ //finish waiting
             t += waitingtime;
+            for(auto& r : ready) r.addwaittime(waitingtime);
             for(auto& w : waiting) w.decreasewaittime(waitingtime);
             waiting.front().movenextwait();
             if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
@@ -275,6 +283,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 }
             }
         } else if(waitingtime == -1 && cputime == -1){ //we have an arrival
+            for(auto& r : ready) r.addwaittime(abs(arrivaltime - t));
             t = arrivaltime;
             if(rradd == "END") ready.push_back(Process(unarrived.front())); else ready.push_front(Process(unarrived.front()));
             if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
@@ -282,8 +291,9 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
             unarrived.pop_front();
         } else if(arrivaltime == -1){ //no arrival, compare waiting/cpu
             if(waitingtime < cputime){
-                if(incpu->getslice() < waitingtime) if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)) continue;
+                if(incpu->getslice() < waitingtime) if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)){preemptions++; continue;}
                 t += waitingtime;
+                for(auto& r : ready) r.addwaittime(waitingtime);
                 incpu->decreaseruntime(waitingtime);
                 for(auto& w : waiting) w.decreasewaittime(waitingtime);
                 waiting.front().movenextwait();
@@ -304,8 +314,9 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                     }
                 }
             } else if(waitingtime > cputime){
-                if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)) continue;
+                if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)){preemptions++; continue;}
                 t += cputime;
+                for(auto& r : ready) r.addwaittime(cputime);
                 for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
                 incpu->movenextruntime();
                 incpu->setslice(tslice);
@@ -319,6 +330,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 printcpufinRR(incpu,t,tcs,ready);
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
                 if(!waiting.empty()){
                     waitingtime = waiting.front().getcurrentwait();
                     if(waitingtime <= 0) {
@@ -335,8 +347,9 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 delete incpu;
                 incpu = NULL;
             } else { //equals case im cry :(
-                if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)) continue;
+                if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)){preemptions++; continue;}
                 t+= cputime;
+                for(auto& r : ready) r.addwaittime(cputime);
                 for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
                 incpu->movenextruntime();
                 incpu->setslice(tslice);
@@ -370,6 +383,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                     }
                 }
                 t += tcs/2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
                 delete incpu;
                 incpu = NULL;
             }
@@ -377,6 +391,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
             if(abs(arrivaltime - t) < cputime){
                 int gap = abs(arrivaltime - t);
                 t = arrivaltime;
+                for(auto& r : ready) r.addwaittime(gap);
                 incpu->decreaseruntime(gap);
                 if(rradd == "END") ready.push_back(Process(unarrived.front())); else ready.push_front(Process(unarrived.front()));;
 
@@ -384,8 +399,9 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 if (t <= 999) printqueueRR(ready);
                 unarrived.pop_front();
             } else {
-                if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)) continue;
+                if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)){preemptions++; continue;}
                 t+= cputime;
+                for(auto& r : ready) r.addwaittime(cputime);
                 incpu->movenextruntime();
                 incpu->setslice(tslice);
                 incpu->decreaseburst();
@@ -398,6 +414,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 printcpufinRR(incpu,t,tcs,ready);
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
                 waitingtime = waiting.front().getcurrentwait();
                 if(!waiting.empty()){
                     waitingtime = waiting.front().getcurrentwait();
@@ -418,6 +435,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
         } else if(cputime == -1){ //no cputime, compare arrival and waiting
             if(waitingtime < abs(arrivaltime - t)){
                 t += waitingtime;
+                for(auto& r : ready) r.addwaittime(waitingtime);
                 waiting.front().movenextwait();
                 if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));;
                 printiofinRR(waiting,ready,t);
@@ -425,6 +443,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
             } else {
                 int gap = abs(arrivaltime - t);
                 t = arrivaltime;
+                for(auto& r : ready) r.addwaittime(gap);
                 for(auto& w : waiting) w.decreasewaittime(gap);
                 if(rradd == "END") ready.push_back(Process(unarrived.front())); else ready.push_front(Process(unarrived.front()));;
                 if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
@@ -446,8 +465,9 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
             }
         } else { //triple check 
             if(cputime < waitingtime && cputime < abs(arrivaltime - t)){
-                if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)) continue;
+                if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)){preemptions++; continue;}
                 t+= cputime;
+                for(auto& r : ready) r.addwaittime(cputime);
                 for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
                 incpu->movenextruntime();
                 incpu->setslice(tslice);
@@ -461,6 +481,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 printcpufinRR(incpu,t,tcs,ready);
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
                 if(!waiting.empty()){
                     waitingtime = waiting.front().getcurrentwait();
                     if(waitingtime <= 0) {
@@ -477,8 +498,9 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 delete incpu;
                 incpu = NULL;
             } else if(waitingtime < cputime && waitingtime < abs(arrivaltime - t)){
-                if(incpu->getslice() < waitingtime) if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)) continue;
+                if(incpu->getslice() < waitingtime) if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd)){preemptions++; continue;}
                 t += waitingtime;
+                for(auto& r : ready) r.addwaittime(waitingtime);
                 incpu->decreaseruntime(waitingtime);
                 for(auto& w : waiting) w.decreasewaittime(waitingtime);
                 waiting.front().movenextwait();
@@ -501,6 +523,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
             } else if(abs(arrivaltime - t) < cputime && abs(arrivaltime - t) < waitingtime){
                 int gap = abs(arrivaltime - t);
                 t = arrivaltime;
+                for(auto& r : ready) r.addwaittime(gap);
                 for(auto& w : waiting) w.decreasewaittime(gap);
                 incpu->decreaseruntime(gap);
                 if(rradd == "END") ready.push_back(Process(unarrived.front())); else ready.push_front(Process(unarrived.front()));;
@@ -535,9 +558,9 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
     }
     double waitavg = (double)waitn / (double)burstcount;
     outfile << "-- average wait time: " << std::setprecision(3) << std::fixed << waitavg <<  " ms\n";
-    outfile << "-- average turnaround time: " << std::setprecision(3) << std::fixed << (double)(burstcount*4 + bursttotal + waitn) / (double) burstcount << " ms\n";
-    outfile << "-- total number of context switches: " << burstcount << '\n';
-    outfile << "-- total number of preemptions: 0\n";
+    outfile << "-- average turnaround time: " << std::setprecision(3) << std::fixed << (double)((burstcount+preemptions)*4 + bursttotal + waitn) / (double) burstcount << " ms\n";
+    outfile << "-- total number of context switches: " << burstcount + preemptions << '\n';
+    outfile << "-- total number of preemptions: " << preemptions << '\n';
 }
 
 

@@ -131,7 +131,8 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
         if(incpu == NULL && !ready.empty()){
             if(arrivaltime != -1 && arrivaltime < t){ //recently added
                 ready.push_back(Process(unarrived.front()));
-                if (t <= 999) std::cout << "time " << arrivaltime << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                ready.sort(comptau);
+                if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " (tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
                 if (t <= 999) printqueueSJF(ready);
                 unarrived.pop_front();
             }
@@ -285,8 +286,6 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 for(auto& r : ready) r.addwaittime(cputime);
                 incpu->movenextruntime();
                 incpu->decreaseburst();
-                // waiting.push_back(Process(*incpu));
-                // incpu->recalculateTau(alpha);
                 if(incpu->getcurrentwait() <= -2) {
                     waiting.push_back(Process(*incpu));
                     delete incpu;
