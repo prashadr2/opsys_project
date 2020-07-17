@@ -96,7 +96,7 @@ class Process{
     int arrival_time;
     int bursts;
     std::list<int> cpu_time;
-    std::list<int> io_time; //if the last element is -2, that means no io burst time is here
+    std::list<int> io_time; //if the last element is -10000, that means no io burst time is here
     int tau;
     int previousBurst;
     int remainingslice;

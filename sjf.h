@@ -108,11 +108,11 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
         if(waiting.size() > 1) waiting.sort(compcurwait);
         if(ready.size() > 1) ready.sort(comptau);
 
-        int waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1; //if this val is -1, wait queue is empty, if it is -2, TERMINATE THE PROCESS!!!!
+        int waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1; //if this val is -1, wait queue is empty, if it is -10000, TERMINATE THE PROCESS!!!!
         int arrivaltime = !unarrived.empty() ? unarrived.front().getarrivaltime() : -1;
         int cputime = (incpu != NULL) ? incpu->getcurrentruntime() : -1; //MAKE SURE TO FREE INCPU AND SET TO NULL AFTER WE COPY IT INTO WAITING QUEUE (waitingqueue.push_back(Process(*incpu)))
 
-        if(waitingtime <= -2){
+        if(waitingtime <= -10000){
             std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " terminated "; 
             printqueueSJF(ready);
             if(ready.empty()) {
@@ -195,7 +195,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
             incpu->decreaseburst();
             // waiting.push_back(Process(*incpu));
             // incpu->recalculateTau(alpha);
-            if(incpu->getcurrentwait() <= -2) {
+            if(incpu->getcurrentwait() <= -10000) {
                 waiting.push_back(Process(*incpu));
                 delete incpu;
                 incpu = NULL;
@@ -244,7 +244,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 incpu->decreaseburst();
                 // waiting.push_back(Process(*incpu));
                 // incpu->recalculateTau(alpha);
-                 if(incpu->getcurrentwait() <= -2) {
+                 if(incpu->getcurrentwait() <= -10000) {
                     waiting.push_back(Process(*incpu));
                     delete incpu;
                     incpu = NULL;
@@ -286,7 +286,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 for(auto& r : ready) r.addwaittime(cputime);
                 incpu->movenextruntime();
                 incpu->decreaseburst();
-                if(incpu->getcurrentwait() <= -2) {
+                if(incpu->getcurrentwait() <= -10000) {
                     waiting.push_back(Process(*incpu));
                     delete incpu;
                     incpu = NULL;
@@ -331,7 +331,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 incpu->decreaseburst();
                 // waiting.push_back(Process(*incpu));
                 // incpu->recalculateTau(alpha);
-                if(incpu->getcurrentwait() <= -2) {
+                if(incpu->getcurrentwait() <= -10000) {
                     waiting.push_back(Process(*incpu));
                     delete incpu;
                     incpu = NULL;
@@ -375,7 +375,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                     for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
                     incpu->movenextruntime();
                     incpu->decreaseburst();
-                    if(incpu->getcurrentwait() <= -2) {
+                    if(incpu->getcurrentwait() <= -10000) {
                         waiting.push_back(Process(*incpu));
                         delete incpu;
                         incpu = NULL;
@@ -454,7 +454,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                     for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
                     incpu->movenextruntime();
                     incpu->decreaseburst();
-                    if(incpu->getcurrentwait() <= -2) {
+                    if(incpu->getcurrentwait() <= -10000) {
                         waiting.push_back(Process(*incpu));
                         delete incpu;
                         incpu = NULL;

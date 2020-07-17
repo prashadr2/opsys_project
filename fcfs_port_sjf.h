@@ -88,15 +88,15 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
 
     while(!ready.empty() || !waiting.empty() || !unarrived.empty() || incpu != NULL){
 #ifdef DEBUG_MODE
-    if(t > 430000) break;
+    if(t > 49000) break;
 #endif
         if(waiting.size() > 1) waiting.sort(compcurwait);
 
-        int waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1; //if this val is -1, wait queue is empty, if it is -2, TERMINATE THE PROCESS!!!!
+        int waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1; //if this val is -1, wait queue is empty, if it is -10000, TERMINATE THE PROCESS!!!!
         int arrivaltime = !unarrived.empty() ? unarrived.front().getarrivaltime() : -1;
         int cputime = (incpu != NULL) ? incpu->getcurrentruntime() : -1; //MAKE SURE TO FREE INCPU AND SET TO NULL AFTER WE COPY IT INTO WAITING QUEUE (waitingqueue.push_back(Process(*incpu)))
 
-        if(waitingtime <= -2){
+        if(waitingtime <= -10000){
             std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " terminated "; 
             printqueueport(ready);
             if(ready.empty()) {
@@ -177,7 +177,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
             incpu->decreaseburst();
             // waiting.push_back(Process(*incpu));
             // incpu->recalculateTau(alpha);
-            if(incpu->getcurrentwait() <= -2) {
+            if(incpu->getcurrentwait() <= -10000) {
                 waiting.push_back(Process(*incpu));
                 delete incpu;
                 incpu = NULL;
@@ -223,7 +223,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 incpu->decreaseburst();
                 // waiting.push_back(Process(*incpu));
                 // incpu->recalculateTau(alpha);
-                 if(incpu->getcurrentwait() <= -2) {
+                 if(incpu->getcurrentwait() <= -10000) {
                     waiting.push_back(Process(*incpu));
                     delete incpu;
                     incpu = NULL;
@@ -265,7 +265,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 incpu->decreaseburst();
                 // waiting.push_back(Process(*incpu));
                 // incpu->recalculateTau(alpha);
-                if(incpu->getcurrentwait() <= -2) {
+                if(incpu->getcurrentwait() <= -10000) {
                     waiting.push_back(Process(*incpu));
                     delete incpu;
                     incpu = NULL;
@@ -310,7 +310,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 incpu->decreaseburst();
                 // waiting.push_back(Process(*incpu));
                 // incpu->recalculateTau(alpha);
-                if(incpu->getcurrentwait() <= -2) {
+                if(incpu->getcurrentwait() <= -10000) {
                     waiting.push_back(Process(*incpu));
                     delete incpu;
                     incpu = NULL;
@@ -354,7 +354,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                     for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
                     incpu->movenextruntime();
                     incpu->decreaseburst();
-                    if(incpu->getcurrentwait() <= -2) {
+                    if(incpu->getcurrentwait() <= -10000) {
                         waiting.push_back(Process(*incpu));
                         delete incpu;
                         incpu = NULL;
@@ -433,7 +433,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                     for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
                     incpu->movenextruntime();
                     incpu->decreaseburst();
-                    if(incpu->getcurrentwait() <= -2) {
+                    if(incpu->getcurrentwait() <= -10000) {
                         waiting.push_back(Process(*incpu));
                         delete incpu;
                         incpu = NULL;
