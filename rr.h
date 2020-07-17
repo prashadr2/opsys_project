@@ -465,7 +465,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 }
             }
         } else { //triple check 
-            if(cputime < waitingtime && cputime < abs(arrivaltime - t)){
+            if(cputime <= waitingtime && cputime <= abs(arrivaltime - t)){
                 if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd,preemptions)) continue;
                 t+= cputime;
                 for(auto& r : ready) r.addwaittime(cputime);
@@ -498,7 +498,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 }
                 delete incpu;
                 incpu = NULL;
-            } else if(waitingtime < cputime && waitingtime < abs(arrivaltime - t)){
+            } else if(waitingtime <= cputime && waitingtime <= abs(arrivaltime - t)){
                 if(incpu->getslice() < waitingtime) if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd,preemptions)) continue;
                 t += waitingtime;
                 for(auto& r : ready) r.addwaittime(waitingtime);
@@ -521,7 +521,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                         waiting.pop_front();
                     }
                 }
-            } else if(abs(arrivaltime - t) < cputime && abs(arrivaltime - t) < waitingtime){
+            } else if(abs(arrivaltime - t) <= cputime && abs(arrivaltime - t) <= waitingtime){
                 int gap = abs(arrivaltime - t);
                 t = arrivaltime;
                 for(auto& r : ready) r.addwaittime(gap);

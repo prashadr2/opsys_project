@@ -302,7 +302,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 unarrived.pop_front();
             }
         } else { //triple check 
-            if(cputime < waitingtime && cputime < abs(arrivaltime - t)){
+            if(cputime <= waitingtime && cputime <= abs(arrivaltime - t)){
                 t+= cputime;
                 for(auto& r : ready) r.addwaittime(cputime);
                 for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
@@ -327,7 +327,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 }
                 delete incpu;
                 incpu = NULL;
-            } else if(waitingtime < cputime && waitingtime < abs(arrivaltime - t)){
+            } else if(waitingtime <= cputime && waitingtime <= abs(arrivaltime - t)){
                 t += waitingtime;
                 incpu->decreaseruntime(waitingtime);
                 for(auto& r : ready) r.addwaittime(waitingtime);
@@ -336,7 +336,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 ready.push_back(Process(waiting.front()));
                 printiofinport(waiting,ready,t);
                 waiting.pop_front();
-            } else if(abs(arrivaltime - t) < cputime && abs(arrivaltime - t) < waitingtime){
+            } else if(abs(arrivaltime - t) <= cputime && abs(arrivaltime - t) <= waitingtime){
                 int gap = abs(arrivaltime - t);
                 t = arrivaltime;
                 for(auto& w : waiting) w.decreasewaittime(gap);

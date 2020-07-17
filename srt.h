@@ -515,7 +515,7 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 }
             }
         } else { //triple check 
-            if(cputime < waitingtime && cputime < abs(arrivaltime - t)){
+            if(cputime <= waitingtime && cputime <= abs(arrivaltime - t)){
                 t+= cputime;
                 for(auto& r : ready) r.addwaittime(cputime);
                 for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
@@ -549,7 +549,7 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 }
                 delete incpu;
                 incpu = NULL;
-            } else if(waitingtime < cputime && waitingtime < abs(arrivaltime - t)){
+            } else if(waitingtime <= cputime && waitingtime <= abs(arrivaltime - t)){
                 t += waitingtime;
                 for(auto& r : ready) r.addwaittime(waitingtime);
                 incpu->decreaseruntime(waitingtime);
@@ -575,7 +575,7 @@ void srt(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                         waiting.pop_front();
                     }
                 }
-            } else if(abs(arrivaltime - t) < cputime && abs(arrivaltime - t) < waitingtime){
+            } else if(abs(arrivaltime - t) <= cputime && abs(arrivaltime - t) <= waitingtime){
                 int gap = abs(arrivaltime - t);
                 t = arrivaltime;
                 for(auto& r : ready) r.addwaittime(gap);
