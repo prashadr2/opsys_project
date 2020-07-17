@@ -302,7 +302,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 unarrived.pop_front();
             }
         } else { //triple check 
-            if(cputime <= waitingtime && cputime <= abs(arrivaltime - t)){
+            if(cputime < waitingtime && cputime < abs(arrivaltime - t)){
                 t+= cputime;
                 for(auto& r : ready) r.addwaittime(cputime);
                 for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
@@ -327,7 +327,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 }
                 delete incpu;
                 incpu = NULL;
-            } else if(waitingtime <= cputime && waitingtime <= abs(arrivaltime - t)){
+            } else if(waitingtime < cputime && waitingtime < abs(arrivaltime - t)){
                 t += waitingtime;
                 incpu->decreaseruntime(waitingtime);
                 for(auto& r : ready) r.addwaittime(waitingtime);
@@ -336,7 +336,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 ready.push_back(Process(waiting.front()));
                 printiofinport(waiting,ready,t);
                 waiting.pop_front();
-            } else if(abs(arrivaltime - t) <= cputime && abs(arrivaltime - t) <= waitingtime){
+            } else if(abs(arrivaltime - t) < cputime && abs(arrivaltime - t) < waitingtime){
                 int gap = abs(arrivaltime - t);
                 t = arrivaltime;
                 for(auto& w : waiting) w.decreasewaittime(gap);
@@ -347,7 +347,117 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 if (t <= 999) printqueueport(ready);
                 unarrived.pop_front();
             } else {
-                std::cout << "bad vibes" << std::endl;
+                // std::cout << "bad vibes" << std::endl;
+                if(waitingtime == cputime){
+                    t+= cputime;
+                    for(auto& r : ready) r.addwaittime(cputime);
+                    for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
+                    incpu->movenextruntime();
+                    incpu->decreaseburst();
+                    if(incpu->getcurrentwait() <= -2) {
+                        waiting.push_back(Process(*incpu));
+                        delete incpu;
+                        incpu = NULL;
+                        continue;
+                    }
+                    printcpufinport(incpu,t,tcs,ready);
+                    incpu->setPreviousBurst(incpu->getcurrentruntime());
+                    waiting.push_back(Process(*incpu));
+                    // t += tcs/2;
+
+                    // 
+
+                    // incpu->decreaseruntime(waitingtime);
+                    // for(auto& w : waiting) w.decreasewaittime(waitingtime);
+                    waiting.front().movenextwait();
+                    ready.push_back(Process(waiting.front()));
+                    // if(preemption_ioSRT(incpu,ready,waiting,t,tcs)) continue;
+                    // if(ready.size() > 1) ready.sort(comptau);
+                    printiofinport(waiting,ready,t);
+                    waiting.pop_front();
+                    if(!waiting.empty()){
+                        waitingtime = waiting.front().getcurrentwait();
+                        if(waitingtime <= 0) {
+                            waiting.front().movenextwait();
+                            ready.push_back(Process(waiting.front()));
+                            // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,preemptions)) continue;
+                            // ready.sort(comptau);
+                            if(waitingtime == -1){
+                                printiofinport(waiting, ready, t-1);
+                            } else {
+                                printiofinport(waiting, ready, t);
+                            }
+                            waiting.pop_front();
+                        }
+                    }
+                    t += tcs/2;
+                    for(auto& r : ready) r.addwaittime(tcs/2);
+                    delete incpu;
+                    incpu = NULL;
+                } else if(waitingtime == abs(arrivaltime - t)){
+                    t += waitingtime;
+                    waiting.front().movenextwait();
+                    ready.push_back(Process(waiting.front()));
+                    // if(preemption_ioSRT(incpu,ready,waiting,t,tcs)) continue;
+                    // if(ready.size() > 1) ready.sort(comptau);
+                    printiofinport(waiting,ready,t);
+                    waiting.pop_front();
+                    if(!waiting.empty()){
+                        waitingtime = waiting.front().getcurrentwait();
+                        if(waitingtime <= 0) {
+                            waiting.front().movenextwait();
+                            ready.push_back(Process(waiting.front()));
+                            // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,preemptions)) continue;
+                            // ready.sort(comptau);
+                            if(waitingtime == -1){
+                                printiofinport(waiting, ready, t-1);
+                            } else {
+                                printiofinport(waiting, ready, t);
+                            }
+                            waiting.pop_front();
+                        }
+                    }
+
+                    //arrival
+                    
+                    for(auto& r : ready) r.addwaittime(abs(arrivaltime - t));
+                    t = arrivaltime;
+                    ready.push_back(Process(unarrived.front()));
+                    // if(ready.size() > 1) ready.sort(comptau);
+                    if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                    if (t <= 999) printqueueport(ready);
+                    unarrived.pop_front();
+                } else if(cputime == abs(arrivaltime - t)){
+                    t+= cputime;
+                    for(auto& r : ready) r.addwaittime(cputime);
+                    for(auto& w : waiting) w.decreasewaittime(cputime + (tcs/2));
+                    incpu->movenextruntime();
+                    incpu->decreaseburst();
+                    if(incpu->getcurrentwait() <= -2) {
+                        waiting.push_back(Process(*incpu));
+                        delete incpu;
+                        incpu = NULL;
+                        continue;
+                    }
+                    printcpufinport(incpu,t,tcs,ready);
+                    incpu->setPreviousBurst(incpu->getcurrentruntime());
+                    waiting.push_back(Process(*incpu));
+                    t += tcs/2;
+                    for(auto& r : ready) r.addwaittime(tcs/2);
+                    delete incpu;
+                    incpu = NULL;
+
+                    //arrival
+                    for(auto& r : ready) r.addwaittime(abs(arrivaltime - t));
+                    t = arrivaltime;
+                    ready.push_back(Process(unarrived.front()));
+                    // if(ready.size() > 1) ready.sort(comptau);
+                    if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
+                    if (t <= 999) printqueueport(ready);
+                    unarrived.pop_front();
+                } else {
+                    // std::cout << "SUPER bad vibes" << std::endl;
+                }
             }
         }
     }

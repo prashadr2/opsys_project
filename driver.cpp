@@ -60,23 +60,23 @@ int main(int argc, char** argv){
         for(int y = 0; y < burstamt; y++){
             cputimes.push_back((int)ceil(nextrandnum(lambda,upperbound)));
             if(y == burstamt - 1){ //last cpu burst
-                iotimes.push_back(-2); //-1 val means NO ioburst on this run... make sure to reflect this in algorithms!!
+                iotimes.push_back(-99999); //-1 val means NO ioburst on this run... make sure to reflect this in algorithms!!
             } else {
                 iotimes.push_back((int)ceil(nextrandnum(lambda,upperbound)));
             }
         }
         psetup.push_back(Process(name,arrivaltime,burstamt,cputimes,iotimes));
     }
-    fcfsport(outfile,psetup,tcs);
-    std::cout << std::endl;
+    // fcfsport(outfile,psetup,tcs);
+    // std::cout << std::endl;
 
-    sjf(outfile, psetup, tcs, alpha, lambda);
-    std::cout << std::endl;
+    // sjf(outfile, psetup, tcs, alpha, lambda);
+    // std::cout << std::endl;
     
     srt(outfile, psetup, tcs, alpha, lambda);
     std::cout << std::endl;
 
-    rr(outfile, psetup, tcs, tslice, rradd);
+    // rr(outfile, psetup, tcs, tslice, rradd);
     // std::cout << std::endl;
 
 // g++ -g -D DEBUG_MODE -o a.o driver.cpp && ./a.o 8 64 0.001 4096 4 0.5 2048
