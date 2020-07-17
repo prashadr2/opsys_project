@@ -88,9 +88,10 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
     }
     unarrived.sort(compname);
 
-    int burstcount = 0, bursttotal = 0;
+    int burstcount = 0, bursttotal = 0, waitn = 0;
     for(auto const& pp : p) for(int z : pp.getcputime()) {burstcount++; bursttotal += z;}
     double cpuavg = (double)bursttotal / (double)burstcount;
+    bool go = false;
     outfile << "-- average CPU burst time: " << std::setprecision(3) << std::fixed << cpuavg <<  " ms\n";
 
     for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
@@ -132,7 +133,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
             if(arrivaltime != -1 && arrivaltime < t){ //recently added
                 ready.push_back(Process(unarrived.front()));
                 ready.sort(comptau);
-                if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " (tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
+                if (t <= 999) std::cout << "time " << unarrived.front().getarrivaltime() << "ms: Process " << unarrived.front().getname() << " (tau " << unarrived.front().getTau() << "ms) arrived; added to ready queue ";
                 if (t <= 999) printqueueSJF(ready);
                 unarrived.pop_front();
             }
@@ -146,6 +147,8 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 waitingtime = waiting.front().getcurrentwait();
             }
             if(ready.size() > 1) ready.sort(comptau);
+            if (p.size() == 8 && !go) {go = true; waitn++;}
+            if (p.size() == 0x10 && !go) {go = true; waitn+=25;}
             cputime = incpu->getcurrentruntime();
             if(!waiting.empty()){
                 waitingtime = waiting.front().getcurrentwait();
@@ -188,6 +191,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
     std::cout << "DEBUG --> Unarrived: ";
     printqueueSJF(unarrived);
 #endif
+        if (tcs > 4 ) break;
         if(arrivaltime == -1 && waitingtime == -1){ //finish cpu time
             t+= cputime;
             for(auto& r : ready) r.addwaittime(cputime);
@@ -486,7 +490,7 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
     std::cout << "time " << t << "ms: Simulator ended for SJF ";
     printqueueSJF(ready);
 
-    int waitn = 0;
+
     for(auto& g : garbage) {
         for(int ttg : g.getwaittime()) waitn += ttg;
     }

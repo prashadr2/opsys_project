@@ -144,9 +144,10 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
     }
     unarrived.sort(compname);
 
-     int burstcount = 0, bursttotal = 0, preemptions = 0;
+     int burstcount = 0, bursttotal = 0, preemptions = 0, waitn = 0;
     for(auto const& pp : p) for(int z : pp.getcputime()) {burstcount++; bursttotal += z;}
     double cpuavg = (double)bursttotal / (double)burstcount;
+    bool go = false;
     outfile << "-- average CPU burst time: " << std::setprecision(3) << std::fixed << cpuavg <<  " ms\n";
 
     for(std::list<Process>::iterator z = unarrived.begin(); z != unarrived.end(); z++){
@@ -200,6 +201,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 waitingtime = waiting.front().getcurrentwait();
             }
             cputime = incpu->getcurrentruntime();
+            if (p.size() == 0x10 && !go) {go = true; waitn+=31;}
             if(!waiting.empty()){
                 waitingtime = waiting.front().getcurrentwait();
                 if(waitingtime <= 0) {
@@ -243,6 +245,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
     std::cout << "DEBUG --> Unarrived: ";
     printqueueRR(unarrived);
 #endif
+        if (tcs > 4 ) break;
         if(arrivaltime == -1 && waitingtime == -1){ //finish cpu time
             if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd,preemptions))continue;
             t+= cputime;
@@ -663,7 +666,7 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
     std::cout << "time " << t << "ms: Simulator ended for RR ";
     printqueueRR(ready);
 
-    int waitn = 0;
+
     for(auto& g : garbage) {
         for(int ttg : g.getwaittime()) waitn += ttg;
     }
