@@ -17,6 +17,7 @@ Emily Martsolf - martse
 #include "srt.h"
 #include "rr.h"
 #include "fcfs_port_sjf.h"
+// #include "fcfs.h"
 #include "process.h"
 
 double nextrandnum(double lambda, int upperbound){
@@ -67,6 +68,9 @@ int main(int argc, char** argv){
         }
         psetup.push_back(Process(name,arrivaltime,burstamt,cputimes,iotimes));
     }
+
+    // fcfs(outfile,psetup,tcs);
+
     fcfsport(outfile,psetup,tcs);
     std::cout << std::endl;
 

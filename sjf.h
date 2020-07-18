@@ -191,7 +191,6 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
     std::cout << "DEBUG --> Unarrived: ";
     printqueueSJF(unarrived);
 #endif
-        if (tcs > 4 ) break;
         if(arrivaltime == -1 && waitingtime == -1){ //finish cpu time
             t+= cputime;
             for(auto& r : ready) r.addwaittime(cputime);
@@ -259,13 +258,12 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
                 for(auto& r : ready) r.addwaittime(tcs/2);
-                waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0) {
+               while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
                     waiting.front().movenextwait();
                     ready.push_back(Process(waiting.front()));
                     ready.sort(comptau);
-                    if(waitingtime == -1){
-                        printiofinSJF(waiting, ready, t-1);
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinSJF(waiting, ready, t-abs(waiting.front().getcurrentwait()));
                     } else {
                         printiofinSJF(waiting, ready, t);
                     }
@@ -400,21 +398,17 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                     if(ready.size() > 1) ready.sort(comptau);
                     printiofinSJF(waiting,ready,t);
                     waiting.pop_front();
-                    if(!waiting.empty()){
-                        waitingtime = waiting.front().getcurrentwait();
-                        if(waitingtime <= 0) {
-                            waiting.front().movenextwait();
-                            ready.push_back(Process(waiting.front()));
-                            // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,preemptions)) continue;
-                            ready.sort(comptau);
-                            if(waitingtime == -1){
-                                printiofinSJF(waiting, ready, t-1);
-                            } else {
-                                printiofinSJF(waiting, ready, t);
-                            }
-                            waiting.pop_front();
-                        }
+                    while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
+                    waiting.front().movenextwait();
+                    ready.push_back(Process(waiting.front()));
+                    ready.sort(comptau);
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinSJF(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
+                        printiofinSJF(waiting, ready, t);
                     }
+                    waiting.pop_front();
+                }
                     t += tcs/2;
                     for(auto& r : ready) r.addwaittime(tcs/2);
                     delete incpu;
@@ -427,21 +421,17 @@ void sjf(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, c
                     if(ready.size() > 1) ready.sort(comptau);
                     printiofinSJF(waiting,ready,t);
                     waiting.pop_front();
-                    if(!waiting.empty()){
-                        waitingtime = waiting.front().getcurrentwait();
-                        if(waitingtime <= 0) {
-                            waiting.front().movenextwait();
-                            ready.push_back(Process(waiting.front()));
-                            // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,preemptions)) continue;
-                            ready.sort(comptau);
-                            if(waitingtime == -1){
-                                printiofinSJF(waiting, ready, t-1);
-                            } else {
-                                printiofinSJF(waiting, ready, t);
-                            }
-                            waiting.pop_front();
-                        }
+                    while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
+                    waiting.front().movenextwait();
+                    ready.push_back(Process(waiting.front()));
+                    ready.sort(comptau);
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinSJF(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
+                        printiofinSJF(waiting, ready, t);
                     }
+                    waiting.pop_front();
+                }
 
                     //arrival
                     

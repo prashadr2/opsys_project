@@ -16,7 +16,7 @@
 void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs);
 void printqueue(std::list<Process>& printer);
 void printcpufin(Process* incpu, int t, const int tcs, std::list<Process>& ready);
-void printiofin(std::list<Process>& waiting, std::list<Process>& ready, int t);
+void printiofinFCFS(std::list<Process>& waiting, std::list<Process>& ready, int t);
 
 void printqueue(std::list<Process>& printer){ //THIS FUNCTION PRINTS A NEWLINE CHAR!!!
   std::cout << "[Q";
@@ -41,7 +41,7 @@ void printcpufin(Process* incpu, int t, const int tcs, std::list<Process>& ready
     printqueue(ready);
 }
 
-void printiofin(std::list<Process>& waiting, std::list<Process>& ready, int t){
+void printiofinFCFS(std::list<Process>& waiting, std::list<Process>& ready, int t){
     std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
     waiting.front().movenextwait();
     ready.push_back(Process(waiting.front()));
@@ -77,329 +77,32 @@ void fcfs(std::ofstream& outfile, const std::vector<Process>& p, const int tcs){
     for(auto const& debugs : ready) std::cout << "DEBUG READYQUEUE --> Process " << debugs.getname() << " (arrival time " << debugs.getarrivaltime() << " ms)" << std::endl;
 #endif
     while(!ready.empty() || !waiting.empty() || !unarrived.empty() || incpu != NULL){ //if any statement is true we have work to do still...
-        // if(t > 7500) break;
-        if(waiting.size() > 1) waiting.sort(compcurwait); //update wait ordering...
-        int waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1; //if this val is -1, wait queue is empty, if it is -2, TERMINATE THE PROCESS!!!!
+        if(waiting.size() > 1) waiting.sort(compcurwait);
+        int waitingtime = !waiting.empty() ? waiting.front().getcurrentwait() : -1; //if this val is -1, wait queue is empty, if it is -10000, TERMINATE THE PROCESS!!!!
         int arrivaltime = !unarrived.empty() ? unarrived.front().getarrivaltime() : -1;
-        // int cputime =  !ready.empty() ? ready.front().getcurrentruntime() : -1;
         int cputime = (incpu != NULL) ? incpu->getcurrentruntime() : -1; //MAKE SURE TO FREE INCPU AND SET TO NULL AFTER WE COPY IT INTO WAITING QUEUE (waitingqueue.push_back(Process(*incpu)))
-#ifdef DEBUG_MODE
-        std::cout << "startwaitingtime1: " << waitingtime << std::endl;
-#endif
-        if(waitingtime <= -2){
+
+         if(waitingtime <= -10000){
             std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " terminated "; 
-            printqueue(ready);
+            printqueueport(ready);
             if(ready.empty()) {
                 t += tcs;
+                for(auto& w: waiting) w.decreasewaittime(tcs/2);
             } else {
                 t += tcs /2;
+                for(auto& r : ready) r.addwaittime(tcs/2);
             }
+            garbage.push_back(Process(waiting.front()));
             waiting.pop_front();
-            for(auto& w: waiting) w.decreasewaittime(tcs/2);
             continue;
         }
-#ifdef DEBUG_MODE
-        std::cout << "startwaitingtime2: " << waitingtime << std::endl;
-#endif
-        if(incpu == NULL && !ready.empty()){
-            if(arrivaltime != -1 && arrivaltime < t){
-                ready.push_back(Process(unarrived.front()));
-                std::cout << "time " << arrivaltime << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                printqueue(ready);
-                unarrived.pop_front();
-            }
-            incpu = new Process(ready.front());
-            ready.pop_front();
-            t += tcs / 2; 
-            if(waitingtime > -1){
-                for(auto& w: waiting) w.decreasewaittime(tcs/2);
-                waitingtime = waiting.front().getcurrentwait();
-            }
-            std::cout << "time " << t << "ms: Process " << incpu->getname() << " started using the CPU for " << incpu->getcurrentruntime() << "ms burst ";
-            printqueue(ready);
-            cputime = incpu->getcurrentruntime();
-        } 
-    #ifdef DEBUG_MODE
-    std::cout << "waitingtime: " << waitingtime << " arrivaltime: " << abs(arrivaltime - t) << " cputime: " << cputime << "▼▼▼▼▼▼▼▼▼" << std::endl;
-    if (incpu != NULL) std::cout << "incpu: " << incpu->getname() << std::endl;
-    std::cout << "Ready: ";
-    printqueue(ready);
-    std::cout << "Waiting: ";
-    printqueue(waiting);
-    std::cout << "Unarrived: ";
-    printqueue(unarrived);
-#endif
 
-        if(arrivaltime == -1){
-            if(waitingtime == -1){//we just have to deal with cputime
-                t += cputime;
-                incpu->movenextruntime();//will be removed next run...
-                incpu->decreaseburst();
-                if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
-                waiting.push_back(Process(*incpu));
-                if(waiting.back().getcurrentwait() <= -2) {
-                    delete incpu;;
-                    incpu = NULL;
-                    continue;
-                } 
-                printcpufin(incpu, t, tcs, ready);
-                delete incpu;
-                incpu = NULL;
-                t += tcs /2;
-                waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0){
-                    std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
-                     waiting.front().movenextwait();
-                    ready.push_back(Process(waiting.front()));
-                    waiting.pop_front();
-                    printqueue(ready);
-                }
-            } else if (cputime == -1) { //we just have to deal with waitingtime
-                t += waitingtime;
-                for(auto& w : waiting) w.decreasewaittime(waitingtime);
-                printiofin(waiting, ready, t);
-            } else { //need to compare waittime and cpu time
-                if(waitingtime <= cputime){ //need to finish the waiting process and decrease cputime by waitingtime (handle equal case also)
-                    if(waitingtime == cputime){ //edge case
-                        t += waitingtime;
-                        std::cout << "time " << t << "ms: Process " << waiting.front().getname() << " completed I/O; added to ready queue ";
-                        waiting.front().movenextwait();
-                        ready.push_back(Process(waiting.front()));
-                        waiting.pop_front();
-                        printqueue(ready);
-                        //
-                        incpu->movenextruntime();//will be removed next run...
-                        incpu->decreaseburst(); 
-                        if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
-                        waiting.push_back(Process(*incpu));
-                        if(waiting.back().getcurrentwait() <= -2) {
-                            delete incpu;;
-                            incpu = NULL;
-                            continue;
-                        } 
-                        printcpufin(incpu, t, tcs, ready);
-                        delete incpu;;
-                        incpu = NULL;
-                        // std::cout << "switch1" << std::endl;
-                        t += tcs /2;
-                        waitingtime = waiting.front().getcurrentwait();
-                        if(waitingtime <= 0){
-                            printiofin(waiting, ready, t);
-                        }
-                    } else {
-                        t += waitingtime;
-                        for(auto& w : waiting) w.decreasewaittime(waitingtime);
-                        incpu->decreaseruntime(waitingtime);
-                        printiofin(waiting, ready, t);
-                    }
-                } else { //decrease waiting time by cputime, move cpu out of processor
-                    t += cputime;
-                    for(auto& w : waiting) w.decreasewaittime(cputime);
-                    // waiting.front().decreasewaittime(cputime);
-                    incpu->movenextruntime();//will be removed next run...
-                    incpu->decreaseburst(); 
-                    if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
-                    waiting.push_back(Process(*incpu));
-                    if(waiting.back().getcurrentwait() <= -2) {
-                        delete incpu;
-                        incpu = NULL;
-                        continue;
-                    } 
-                    printcpufin(incpu, t, tcs, ready);
-                    delete incpu;;
-                    incpu = NULL;
-                    // std::cout << "switch1" << std::endl;
-                    t += tcs /2;
-                    waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0){
-                    printiofin(waiting, ready, t);
-                }
-                    // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
-                }
-            }
-        } else if(waitingtime == -1){
-            //compare arrivaltime and cpu time...
-            if(cputime == -1){ //if theres no cpu times to compare... we have an arrival
-                t = arrivaltime;
-                while(!unarrived.empty() && unarrived.front().getarrivaltime() == t){
-                    ready.push_back(unarrived.front());
-                    std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                    printqueue(ready);
-                    unarrived.pop_front();
-                }
-            } else {//compare arrivaltime and cpu time...
-                if(arrivaltime > cputime){
-                    //just increment t by cputime..
-                    t += cputime;
-                    incpu->movenextruntime();//will be removed next run...
-                    incpu->decreaseburst(); 
-                    if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
-                    waiting.push_back(Process(*incpu));
-                    if(waiting.back().getcurrentwait() <= -2) {
-                        delete incpu;;
-                        incpu = NULL;
-                        continue;
-                    } 
-                    printcpufin(incpu, t, tcs, ready);
-                    delete incpu;
-                    incpu = NULL;
-                    // std::cout << "switch1" << std::endl;
-                    t += tcs /2;
-                    waitingtime = waiting.front().getcurrentwait();
-                    if(waitingtime <= 0) printiofin(waiting, ready, t);
-                    // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
-                } else {
-                    int gap = abs(arrivaltime - t);
-                    t += gap;
-                    incpu->decreaseruntime(gap); //need to handle the process currently running also
-                    while(!unarrived.empty() && unarrived.front().getarrivaltime() == t){
-                        ready.push_back(unarrived.front());
-                        std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                        printqueue(ready);
-                        unarrived.pop_front();
-                    }
-                }
-            }
-        } else if(cputime == -1){
-            //if we get here, then waitngtime and arrival time are both populated, or else we would've gone into one of the above branches
-            if(waitingtime <= arrivaltime){//decrease arrivaltime by waitingtime
-                if(waitingtime == arrivaltime){
-//TODO
-                } else { //finish waiting and jump time
-                    t += waitingtime;
-                    // incpu->decreaseruntime(waitingtime);
-                    printiofin(waiting, ready, t);
-                }
-            } else { //decrease waitingtime by arrivalgap, and handle the arrival
-                int gap = abs(arrivaltime - t);
-                t += gap;
-                for(auto& w : waiting) w.decreasewaittime(cputime);
-                // waiting.front().decreasewaittime(gap);
-                while(!unarrived.empty() && unarrived.front().getarrivaltime() == t){
-                    ready.push_back(unarrived.front());
-                    std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                    printqueue(ready);
-                    unarrived.pop_front();
-                }
-            }
-        } else { //if we get here that means all 3 queues are occupied... god help us
-            if(abs(arrivaltime - t) <= waitingtime && abs(arrivaltime - t) <= cputime){ //process arrival
-                int gap = abs(arrivaltime - t);
-                t += gap;
-                // incpu->decreaseruntime(gap); //need to handle the process currently running also
-                while(!unarrived.empty() && unarrived.front().getarrivaltime() == t){
-                    ready.push_back(unarrived.front());
-                    std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                    printqueue(ready);
-                    unarrived.pop_front();
-                }
-                //the gap MUST not go over the smallest waitingtime by the if statement...
-                for(auto & w : waiting){
-                    if(w.getcurrentwait() - gap == 0){ //if the remainder wait time is the same as arrival time difference
-                        Process adder(w);
-                        //TODO: remove w from waiting at this line!!!!!!
-                        adder.movenextwait();
-                        std::cout << "time " << t << "ms: Process " << adder.getname() << " completed I/O; added to ready queue ";
-                        ready.push_back(Process(adder));
-                        printqueue(ready);
 
-                    } else { //just decrease wait time
-                        w.decreasewaittime(gap);
-                    }
-                }
-                //need to edit cputime...
-                if(cputime == gap) {//take cpu out and go into waiting
-                    incpu->movenextruntime();//will be removed next run...
-                    incpu->decreaseburst(); 
-                    if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
-                    waiting.push_back(Process(*incpu));
-                    if(waiting.back().getcurrentwait() <= -2) {
-                        delete incpu;;
-                        incpu = NULL;
-                        continue;
-                    } 
-                    printcpufin(incpu, t, tcs, ready);
-                    delete incpu;;
-                    incpu = NULL;
-                    // std::cout << "switch1" << std::endl;
-                    t += tcs /2;
-                    waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0){
-                    printiofin(waiting, ready, t);
-                }
-                    // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
-                } else {//just decrease time
-                    incpu->decreaseruntime(gap);
-                }
-            } else if(waitingtime <= abs(arrivaltime - t) && waitingtime <= cputime){ //process finishes I/O
-                // std::cout << "switchfdsjflsdajlksdajflksdafjfjddfkl;asfd;lk" << std::endl;
-                t += waitingtime;
-                for(auto& w : waiting) w.decreasewaittime(waitingtime);
-                printiofin(waiting, ready, t);
-                if(arrivaltime == t){ //arrival at same time that waiting is over
-                    while(!unarrived.empty() && unarrived.front().getarrivaltime() == t){
-                        ready.push_back(unarrived.front());
-                        std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
-                        printqueue(ready);
-                        unarrived.pop_front();
-                    }
-                }
-                //decrease cputime by gap or move it out if we finish n same time as wait
-                if(cputime == waitingtime){ //move it out
-                    incpu->movenextruntime();//will be removed next run...
-                    incpu->decreaseburst(); 
-                    if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
-                    waiting.push_back(Process(*incpu));
-                    if(waiting.back().getcurrentwait() <= -2) {
-                        delete incpu;;
-                        incpu = NULL;
-                        continue;
-                    } 
-                     printcpufin(incpu, t, tcs, ready);
-                    delete incpu;;
-                    incpu = NULL;
-                    // std::cout << "switch1" << std::endl;
-                    t += tcs /2;
-                    waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0){
-                    // std::cout << "switch2" << std::endl;
-                    printiofin(waiting, ready, t);printiofin(waiting, ready, t);
-                }
-                    // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
-                } else { //decreasee runtime
-                // std::cout << "switch3" << std::endl;
-                    for(auto& w : waiting) w.decreasewaittime(waitingtime);
-                    incpu->decreaseruntime(waitingtime);
-                }
+        if(arrivaltime == t) {
 
-            } else if(cputime <= waitingtime && cputime <= abs(arrivaltime - t)){ //process completes CPU burst
-                t += cputime;
-                for(auto& w : waiting) w.decreasewaittime(cputime);
-                // waiting.front().decreasewaittime(cputime);
-
-                incpu->movenextruntime();//will be removed next run...
-                incpu->decreaseburst(); 
-                if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
-                waiting.push_back(Process(*incpu));
-                if(waiting.back().getcurrentwait() <= -2) {
-                    delete incpu;;
-                    incpu = NULL;
-                    continue;
-                } 
-                printcpufin(incpu, t, tcs, ready);
-                delete incpu;;
-                incpu = NULL;
-                // std::cout << "switch1" << std::endl;
-                t += tcs /2;
-                waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0){
-                    printiofin(waiting, ready, t);
-                }
-                // if(waitingtime != -1) for(auto& w: waiting) w.decreasewaittime(tcs/2);
-            } else{
-                std::cout << "what case even makes this run???????????????????????????????????" << std::endl;
-            }
         }
+
+        t++;
     }
     t-=tcs/2;
     std::cout << "time " << t << "ms: Simulator ended for FCFS ";

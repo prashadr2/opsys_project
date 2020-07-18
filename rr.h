@@ -245,7 +245,6 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
     std::cout << "DEBUG --> Unarrived: ";
     printqueueRR(unarrived);
 #endif
-        if (tcs > 4 ) break;
         if(arrivaltime == -1 && waitingtime == -1){ //finish cpu time
             if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd,preemptions))continue;
             t+= cputime;
@@ -273,19 +272,16 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
             if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
             printiofinRR(waiting,ready,t);
             waiting.pop_front();
-            if(!waiting.empty()){
-                waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0) {
+            while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
                     waiting.front().movenextwait();
                     if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
-                    if(waitingtime == -1){
-                        printiofinRR(waiting, ready, t-1);
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinRR(waiting, ready, t-abs(waiting.front().getcurrentwait()));
                     } else {
                         printiofinRR(waiting, ready, t);
                     }
                     waiting.pop_front();
                 }
-            }
         } else if(waitingtime == -1 && cputime == -1){ //we have an arrival
             for(auto& r : ready) r.addwaittime(abs(arrivaltime - t));
             t = arrivaltime;
@@ -304,18 +300,15 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
                 printiofinRR(waiting,ready,t);
                 waiting.pop_front();
-                if(!waiting.empty()){
-                    waitingtime = waiting.front().getcurrentwait();
-                    if(waitingtime <= 0) {
-                        waiting.front().movenextwait();
-                        if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
-                        if(waitingtime == -1){
-                            printiofinRR(waiting, ready, t-1);
-                        } else {
-                            printiofinRR(waiting, ready, t);
-                        }
-                        waiting.pop_front();
+                while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
+                    waiting.front().movenextwait();
+                    if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinRR(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
+                        printiofinRR(waiting, ready, t);
                     }
+                    waiting.pop_front();
                 }
             } else if(waitingtime > cputime){
                 if(preemption_ioRR(incpu,ready,waiting,t,tcs,tslice,rradd,preemptions)) continue;
@@ -335,18 +328,15 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
                 for(auto& r : ready) r.addwaittime(tcs/2);
-                if(!waiting.empty()){
-                    waitingtime = waiting.front().getcurrentwait();
-                    if(waitingtime <= 0) {
-                        waiting.front().movenextwait();
-                        if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));;
-                        if(waitingtime == -1){
-                            printiofinRR(waiting, ready, t-1);
-                        } else {
-                            printiofinRR(waiting, ready, t);
-                        }
-                        waiting.pop_front();
+                while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
+                    waiting.front().movenextwait();
+                    if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinRR(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
+                        printiofinRR(waiting, ready, t);
                     }
+                    waiting.pop_front();
                 }
                 delete incpu;
                 incpu = NULL;
@@ -373,18 +363,15 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));;
                 printiofinRR(waiting,ready,t);
                 waiting.pop_front();
-                if(!waiting.empty()){
-                    waitingtime = waiting.front().getcurrentwait();
-                    if(waitingtime <= 0) {
-                        waiting.front().movenextwait();
-                        if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));;
-                        if(waitingtime == -1){
-                            printiofinRR(waiting, ready, t-1);
-                        } else {
-                            printiofinRR(waiting, ready, t);
-                        }
-                        waiting.pop_front();
+               while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
+                    waiting.front().movenextwait();
+                    if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinRR(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
+                        printiofinRR(waiting, ready, t);
                     }
+                    waiting.pop_front();
                 }
                 t += tcs/2;
                 for(auto& r : ready) r.addwaittime(tcs/2);
@@ -420,18 +407,15 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 t += tcs/2;
                 for(auto& r : ready) r.addwaittime(tcs/2);
                 waitingtime = waiting.front().getcurrentwait();
-                if(!waiting.empty()){
-                    waitingtime = waiting.front().getcurrentwait();
-                    if(waitingtime <= 0) {
-                        waiting.front().movenextwait();
-                        if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));;
-                        if(waitingtime == -1){
-                            printiofinRR(waiting, ready, t-1);
-                        } else {
-                            printiofinRR(waiting, ready, t);
-                        }
-                        waiting.pop_front();
+                while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
+                    waiting.front().movenextwait();
+                    if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinRR(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
+                        printiofinRR(waiting, ready, t);
                     }
+                    waiting.pop_front();
                 }
                 delete incpu;
                 incpu = NULL;
@@ -453,18 +437,15 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
                 if (t <= 999) printqueueRR(ready);
                 unarrived.pop_front();
-                if(!waiting.empty()){
-                    waitingtime = waiting.front().getcurrentwait();
-                    if(waitingtime <= 0) {
-                        waiting.front().movenextwait();
-                        if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));;
-                        if(waitingtime == -1){
-                            printiofinRR(waiting, ready, t-1);
-                        } else {
-                            printiofinRR(waiting, ready, t);
-                        }
-                        waiting.pop_front();
+                while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
+                    waiting.front().movenextwait();
+                    if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinRR(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
+                        printiofinRR(waiting, ready, t);
                     }
+                    waiting.pop_front();
                 }
             }
         } else { //triple check 
@@ -486,18 +467,15 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
                 for(auto& r : ready) r.addwaittime(tcs/2);
-                if(!waiting.empty()){
-                    waitingtime = waiting.front().getcurrentwait();
-                    if(waitingtime <= 0) {
-                        waiting.front().movenextwait();
-                        if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));;
-                        if(waitingtime == -1){
-                            printiofinRR(waiting, ready, t-1);
-                        } else {
-                            printiofinRR(waiting, ready, t);
-                        }
-                        waiting.pop_front();
+                while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
+                    waiting.front().movenextwait();
+                    if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinRR(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
+                        printiofinRR(waiting, ready, t);
                     }
+                    waiting.pop_front();
                 }
                 delete incpu;
                 incpu = NULL;
@@ -511,18 +489,15 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));;
                 printiofinRR(waiting,ready,t);
                 waiting.pop_front();
-                if(!waiting.empty()){
-                    waitingtime = waiting.front().getcurrentwait();
-                    if(waitingtime <= 0) {
-                        waiting.front().movenextwait();
-                        if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));;
-                        if(waitingtime == -1){
-                            printiofinRR(waiting, ready, t-1);
-                        } else {
-                            printiofinRR(waiting, ready, t);
-                        }
-                        waiting.pop_front();
+                while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
+                    waiting.front().movenextwait();
+                    if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinRR(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
+                        printiofinRR(waiting, ready, t);
                     }
+                    waiting.pop_front();
                 }
             } else if(abs(arrivaltime - t) < cputime && abs(arrivaltime - t) < waitingtime){
                 int gap = abs(arrivaltime - t);
@@ -534,18 +509,15 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                 if (t <= 999) std::cout << "time " << t << "ms: Process " << unarrived.front().getname() << " arrived; added to ready queue ";
                 if (t <= 999) printqueueRR(ready);
                 unarrived.pop_front();
-                if(!waiting.empty()){
-                    waitingtime = waiting.front().getcurrentwait();
-                    if(waitingtime <= 0) {
-                        waiting.front().movenextwait();
-                        if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));;
-                        if(waitingtime == -1){
-                            printiofinRR(waiting, ready, t-1);
-                        } else {
-                            printiofinRR(waiting, ready, t);
-                        }
-                        waiting.pop_front();
+                while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
+                    waiting.front().movenextwait();
+                    if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinRR(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
+                        printiofinRR(waiting, ready, t);
                     }
+                    waiting.pop_front();
                 }
             } else {
                 // std::cout << "bad vibes" << std::endl;
@@ -578,18 +550,16 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                     waiting.pop_front();
                     if(!waiting.empty()){
                         waitingtime = waiting.front().getcurrentwait();
-                        if(waitingtime <= 0) {
-                            waiting.front().movenextwait();
-                            ready.push_back(Process(waiting.front()));
-                            // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,preemptions)) continue;
-                            // ready.sort(comptau);
-                            if(waitingtime == -1){
-                                printiofinRR(waiting, ready, t-1);
-                            } else {
-                                printiofinRR(waiting, ready, t);
-                            }
-                            waiting.pop_front();
-                        }
+                        while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
+                    waiting.front().movenextwait();
+                    if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinRR(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
+                        printiofinRR(waiting, ready, t);
+                    }
+                    waiting.pop_front();
+                }
                     }
                     t += tcs/2;
                     for(auto& r : ready) r.addwaittime(tcs/2);
@@ -605,18 +575,16 @@ void rr(std::ofstream& outfile, const std::vector<Process>& p, const int tcs, in
                     waiting.pop_front();
                     if(!waiting.empty()){
                         waitingtime = waiting.front().getcurrentwait();
-                        if(waitingtime <= 0) {
-                            waiting.front().movenextwait();
-                            ready.push_back(Process(waiting.front()));
-                            // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,preemptions)) continue;
-                            // ready.sort(comptau);
-                            if(waitingtime == -1){
-                                printiofinRR(waiting, ready, t-1);
-                            } else {
-                                printiofinRR(waiting, ready, t);
-                            }
-                            waiting.pop_front();
-                        }
+                        while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
+                    waiting.front().movenextwait();
+                    if(rradd == "END") ready.push_back(Process(waiting.front())); else ready.push_front(Process(waiting.front()));
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinRR(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
+                        printiofinRR(waiting, ready, t);
+                    }
+                    waiting.pop_front();
+                }
                     }
 
                     //arrival

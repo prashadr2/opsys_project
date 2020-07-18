@@ -89,7 +89,7 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
 
     while(!ready.empty() || !waiting.empty() || !unarrived.empty() || incpu != NULL){
 #ifdef DEBUG_MODE
-    if(t > 49000) break;
+    // if(t > 49000) break;
 #endif
         if(waiting.size() > 1) waiting.sort(compcurwait);
 
@@ -173,7 +173,6 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
     std::cout << "DEBUG --> Unarrived: ";
     printqueueport(unarrived);
 #endif
-        if (tcs > 4 ) break;
         if(arrivaltime == -1 && waitingtime == -1){ //finish cpu time
             t+= cputime;
             for(auto& r : ready) r.addwaittime(cputime);
@@ -237,14 +236,13 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                 waiting.push_back(Process(*incpu));
                 t += tcs/2;
                 for(auto& r : ready) r.addwaittime(tcs/2);
-                waitingtime = waiting.front().getcurrentwait();
-                if(waitingtime <= 0) {
+
+                while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
                     waiting.front().movenextwait();
                     ready.push_back(Process(waiting.front()));
-                    if(waitingtime == -1) {
-                        printiofinport(waiting, ready, t-1);
-                    }
-                    else {
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinport(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
                         printiofinport(waiting, ready, t);
                     }
                     waiting.pop_front();
@@ -379,21 +377,16 @@ void fcfsport(std::ofstream& outfile, const std::vector<Process>& p, const int t
                     // if(ready.size() > 1) ready.sort(comptau);
                     printiofinport(waiting,ready,t);
                     waiting.pop_front();
-                    if(!waiting.empty()){
-                        waitingtime = waiting.front().getcurrentwait();
-                        if(waitingtime <= 0) {
-                            waiting.front().movenextwait();
-                            ready.push_back(Process(waiting.front()));
-                            // if(preemption_ioSRT(incpu,ready,waiting,t,tcs,preemptions)) continue;
-                            // ready.sort(comptau);
-                            if(waitingtime == -1){
-                                printiofinport(waiting, ready, t-1);
-                            } else {
-                                printiofinport(waiting, ready, t);
-                            }
-                            waiting.pop_front();
-                        }
+                     while(!waiting.empty() && waiting.front().getcurrentwait() <= 0){
+                    waiting.front().movenextwait();
+                    ready.push_back(Process(waiting.front()));
+                    if(waiting.front().getcurrentwait() <= -1) {
+                        printiofinport(waiting, ready, t-abs(waiting.front().getcurrentwait()));
+                    } else {
+                        printiofinport(waiting, ready, t);
                     }
+                    waiting.pop_front();
+                }
                     t += tcs/2;
                     for(auto& r : ready) r.addwaittime(tcs/2);
                     delete incpu;
